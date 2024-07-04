@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Open Splitwise - Add Friend</title>
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/friends.css" rel="stylesheet">
+</head>
+<body>
+
+
+<div class="container-sm">
+    <div>
+        <img src="img/logo.png" alt="" width="48"/>
+        <span class="p-2">Open Splitwise</span>
+    </div>
+    <nav class="navbar navbar-light">
+        <form action="friends.html">
+            <button class="btn btn-secondary w-100" type="submit">Cancel</button>
+        </form>
+        <form action="addfriend.html">
+            <button class="btn btn-primary  w-100" type="submit">Save</button>
+        </form>
+    </nav>
+
+    <div class="py-4">
+        <form>
+            <div class="form-floating py-2">
+                <input type="name" class="form-control" id="name" placeholder="">
+                <label for="name">Name</label>
+            </div>
+            <div class="form-floating py-2">
+                <input type="email" class="form-control" id="email" placeholder="">
+                <label for="email">Email address</label>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script src="node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
