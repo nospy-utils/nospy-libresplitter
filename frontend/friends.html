@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Open Splitwise - Home</title>
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/friends.css" rel="stylesheet">
+</head>
+<body>
+
+
+<div class="container-sm">
+    <div>
+        <img src="img/logo.png" alt="" width="48"/>
+        <span class="p-2">Open Splitwise</span>
+    </div>
+
+    <nav class="navbar navbar-light">
+        <form class="d-flex">
+            <input class="form-control me-2" type="search" placeholder="Search friend" aria-label="Search friend">
+            <button class="btn btn-outline-success" type="submit">Search</button>
+        </form>
+        <form action="addfriend.html">
+            <button class="btn btn-outline-success" type="submit">Add Friends</button>
+        </form>
+    </nav>
+
+    <div class="container content">
+        <div class="row py-2">
+            <div class="col">
+                <h3>
+                    Overall, you are owed
+                    <span class="positive">$941.78</span> +
+                    <span class="negative">R$1,176.96</span>
+                </h3>
+            </div>
+        </div>
+
+        <div class="row py-2">
+            <div class="col-8">
+                <div class="row">
+                    <div class="col-1">
+                        <div class="friend-thumbnail">
+                            <img src="node_modules/bootstrap-icons/icons/person.svg"
+                                 alt="placeholder" width="64" height="64"/>
+                        </div>
+                    </div>
+                    <div class="col-11 px-4">
+                        <h3>Tatiana Almeida</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 text-end">
+                Owes you <span class="positive">$941.78</span>
+            </div>
+        </div>
+
+
+    </div>
+
+    <footer class="fixed-bottom py-2">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <form action="friends.html">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <img src="node_modules/bootstrap-icons/icons/person-fill.svg" alt="" width="24" height="24">
+                            Friends
+                        </button>
+                    </form>
+                </div>
+                <div class="col">
+                    <form action="addexpense.html">
+                        <button type="submit" class="btn btn-success w-100">
+                            <img src="node_modules/bootstrap-icons/icons/plus-square-fill.svg" alt="" width="24"
+                                 height="24">
+                            Add Expense
+                        </button>
+                    </form>
+                </div>
+                <div class="col">
+                    <form action="activity.html">
+                        <button type="button" class="btn btn-primary w-100">
+                            <img src="node_modules/bootstrap-icons/icons/activity.svg" alt="" width="24" height="24">
+                            Activity
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+
+<script src="node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
+<script src="node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
