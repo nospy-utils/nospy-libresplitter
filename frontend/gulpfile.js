@@ -44,7 +44,7 @@ function css() {
 }
 
 function img() {
-    return gulp.src('./img/*', {encoding: false})
+    return gulp.src('./img/**', {encoding: false})
         .pipe(gulp.dest('./' + OUT_IMG_DIR));
 }
 
@@ -87,7 +87,7 @@ async function build() {
     html();
 
     gulp.watch('./sass/**/*.sass', gulp.series(build_prep, css));
-    // gulp.watch('./img/**/**', gulp.series(build_prep, img));
+    gulp.watch('./img/**', gulp.series(build_prep, img));
     gulp.watch('./*.html', gulp.series(build_prep, html));
 }
 
