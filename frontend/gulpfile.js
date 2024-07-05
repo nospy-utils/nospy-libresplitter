@@ -3,6 +3,7 @@
 const gulp = require('gulp');
 const sass = require('gulp-sass')(require('sass'));
 const fs = require('fs');
+const fileinclude = require('gulp-file-include');
 
 const OUT_DIR = 'output';
 const OUT_CSS_DIR = OUT_DIR + '/css';
@@ -14,7 +15,7 @@ const OUT_VENDOR_IMG_DIR = OUT_VENDOR_DIR + '/img';
 const OUT_VENDOR_CSS_DIR = OUT_VENDOR_DIR + '/css';
 
 async function clean() {
-  await fs.rmSync(OUT_DIR, { recursive: true, force: true });
+    await fs.rmSync(OUT_DIR, {recursive: true, force: true});
 }
 
 function build_prep() {
@@ -72,7 +73,12 @@ function vendor_css() {
 }
 
 function html() {
+    console.log("running html");
     return gulp.src('./*.html')
+        .pipe(fileinclude({
+            prefix: '@@',
+            basepath: '@file'
+        }))
         .pipe(gulp.dest('./' + OUT_DIR));
 }
 
@@ -87,8 +93,8 @@ async function build() {
     html();
 
     gulp.watch('./sass/**/*.sass', gulp.series(build_prep, css));
-    gulp.watch('./img/**', gulp.series(build_prep, img));
-    gulp.watch('./*.html', gulp.series(build_prep, html));
+    gulp.watch('./img/**', gulp.series(img));
+    gulp.watch('./*.html', gulp.series(html));
 }
 
 exports.default = build;

@@ -15,6 +15,7 @@
   "devDependencies": {
     "gulp": "^5.0.0",
     "gulp-cli": "^3.0.0",
+    "gulp-file-include": "^2.3.0",
     "gulp-sass": "^5.1.0",
     "http-serve": "^1.0.1",
     "sass": "^1.77.6"
