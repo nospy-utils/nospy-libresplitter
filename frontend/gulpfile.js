@@ -90,11 +90,15 @@ async function build() {
     img();
     css();
     html();
+}
 
+async function watch() {
+    await build()
     gulp.watch('./sass/**/*.sass', gulp.series(css));
     gulp.watch('./img/**', gulp.series(img));
     gulp.watch('./*.html', gulp.series(html));
 }
 
 exports.default = build;
+exports.watch = watch;
 exports.clean = clean;
