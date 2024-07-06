@@ -73,7 +73,6 @@ function vendor_css() {
 }
 
 function html() {
-    console.log("running html");
     return gulp.src('./*.html')
         .pipe(fileinclude({
             prefix: '@@',
@@ -92,7 +91,7 @@ async function build() {
     css();
     html();
 
-    gulp.watch('./sass/**/*.sass', gulp.series(build_prep, css));
+    gulp.watch('./sass/**/*.sass', gulp.series(css));
     gulp.watch('./img/**', gulp.series(img));
     gulp.watch('./*.html', gulp.series(html));
 }
