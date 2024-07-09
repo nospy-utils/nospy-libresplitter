@@ -49,6 +49,11 @@ function img() {
         .pipe(gulp.dest('./' + OUT_IMG_DIR));
 }
 
+function js() {
+    return gulp.src('./js/*.js')
+        .pipe(gulp.dest('./' + OUT_JS_DIR));
+}
+
 function vendor_js() {
     return gulp.src([
         './node_modules/bootstrap/dist/js/bootstrap.bundle.min.js',
@@ -88,6 +93,7 @@ async function build() {
     vendor_css();
     vendor_js();
     img();
+    js();
     css();
     html();
 }
@@ -95,6 +101,7 @@ async function build() {
 async function watch() {
     await build()
     gulp.watch('./sass/**/*.sass', gulp.series(css));
+    gulp.watch('./js/*.js', gulp.series(js));
     gulp.watch('./img/**', gulp.series(img));
     gulp.watch('./*.html', gulp.series(html));
 }

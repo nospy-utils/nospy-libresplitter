@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Open Splitwise - Add Expense</title>
     <link href="vendor/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/addexpense.css" rel="stylesheet">
@@ -51,10 +52,75 @@
                     <span class="input-group-text">$</span>
                     <input type="number" class="form-control" min="0.00" step="0.01" value="0.00"/>
                 </div>
-                <button type="button" class="btn btn-warning">Paid by you and split equally</button>
+                <button type="button" id="paymentOptions" class="btn btn-warning" data-bs-toggle="modal"
+                        data-bs-target="#paymentOptionsModal">Paid by you and split equally
+                </button>
             </form>
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="paymentOptionsModal" tabindex="-1" aria-labelledby="paymentOptionsModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentOptionsModalLabel">Expense details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+                <div class="modal-body addexpense-expensedetails-modal">
+                    <div id="carouselOptions" class="carousel slide" data-bs-ride="false">
+                        <div class="row">
+                            <div class="col-4">
+                                <button type="button"
+                                        data-bs-target="#carouselOptions"
+                                        data-bs-slide-to="0"
+                                        aria-current="true"
+                                        class="btn btn-primary w-100">
+                                    =
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button type="button"
+                                        data-bs-target="#carouselOptions"
+                                        data-bs-slide-to="1"
+                                        class="btn btn-primary w-100">
+                                    1.23
+                                </button>
+                            </div>
+                            <div class="col-4">
+                                <button type="button"
+                                        data-bs-target="#carouselOptions"
+                                        data-bs-slide-to="2"
+                                        class="btn btn-primary w-100">
+                                    %
+                                </button>
+                            </div>
+
+                        </div>
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <div class="d-block w-100"> slide 1</div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="d-block w-100"> slide 2</div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="d-block w-100"> slide 3</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 </div>
 
