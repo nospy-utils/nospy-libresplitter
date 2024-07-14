@@ -8,5 +8,12 @@
 
 .content-with-tabbar
     overflow-y: auto
-    /* 100vh - header - navbar - footer - padding */
-    height: calc(100vh - 48px - 38px - 40px - 46px)
+    height: 100%
+    > div.row:last-child
+        margin-bottom: 80px
+
+.tabbar-button
+    height: 68px
+
+footer
+    background-color: white
