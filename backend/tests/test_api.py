@@ -1,6 +1,3 @@
-import pytest
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -75,25 +72,27 @@ class TestSignin:
         signup(client)
         r = signin(client)
         assert r.status_code == 200
-        body = r.get_json()
-        assert body["email"] == "user@example.com"
 
     def test_wrong_password_returns_401(self, client):
         signup(client)
         r = signin(client, password="wrongpassword")
         assert r.status_code == 401
+        assert "invalid email or password" in r.get_json()["description"].lower()
 
     def test_unknown_email_returns_401(self, client):
         r = signin(client, email="ghost@example.com")
         assert r.status_code == 401
+        assert "invalid email or password" in r.get_json()["description"].lower()
 
     def test_missing_email_returns_400(self, client):
         r = client.post("/api/signin", json={"password": "password123"})
         assert r.status_code == 400
+        assert "required" in r.get_json()["description"].lower()
 
     def test_missing_password_returns_400(self, client):
         r = client.post("/api/signin", json={"email": "user@example.com"})
         assert r.status_code == 400
+        assert "required" in r.get_json()["description"].lower()
 
     def test_signin_email_is_case_insensitive(self, client):
         signup(client, email="user@example.com")

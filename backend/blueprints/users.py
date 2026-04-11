@@ -1,7 +1,5 @@
 from flask import Blueprint, request, jsonify, session
-from werkzeug.security import check_password_hash
 
-from db import get_db
 from services import UserService
 
 users_bp = Blueprint("users", __name__, url_prefix="/api")
@@ -28,22 +26,15 @@ def signin():
     password = data.get("password") or ""
     remember = bool(data.get("remember_me", False))
 
-    if not email or not password:
-        return jsonify({"error": "Email and password are required."}), 400
-
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT id, email, password FROM users WHERE email = ?", (email,)
-        ).fetchone()
-
-    if row is None or not check_password_hash(row["password"], password):
-        return jsonify({"error": "Invalid email or password."}), 401
+    service = UserService()
+    user = service.authenticate(email, password)
 
     session.permanent = remember
-    session["user_id"] = row["id"]
-    session["email"] = row["email"]
+    session["user_id"] = user.user_id
+    session["name"] = user.name
+    session["email"] = user.email
 
-    return jsonify({"message": "Signed in successfully.", "email": row["email"]}), 200
+    return jsonify({"message": "Signed in successfully."}), 200
 
 
 @users_bp.post("/signout")

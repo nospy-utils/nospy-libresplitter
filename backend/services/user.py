@@ -1,10 +1,30 @@
+from werkzeug.security import check_password_hash
+
 from models import User
 
 from daos import UserDAO
-from services.exceptions import UserInputValidationException
+from services.exceptions import UserInputValidationException, InvalidCredentialsException
 
 
 class UserService:
+
+    def authenticate(self, email: str, password: str) -> User:
+        if not email or not password:
+            raise UserInputValidationException("Email and password are required.")
+
+        dao = UserDAO()
+        row = dao.find_by_email(email)
+
+        if row is None or not check_password_hash(row["password"], password):
+            raise InvalidCredentialsException()
+
+        user = User(
+            user_id=row["id"],
+            name=row["name"],
+            email=row["email"],
+        )
+
+        return user
 
     def save_user(self, name:str, email:str, password:str) -> None:
         user = User(
