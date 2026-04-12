@@ -1,10 +1,10 @@
 import json
 import os
 
-import werkzeug
+from werkzeug.exceptions import HTTPException
 from flask import Flask
 
-from db import init_db
+from database.db import init_db
 from blueprints import users_bp
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ init_db()
 
 app.register_blueprint(users_bp)
 
-@app.errorhandler(werkzeug.exceptions.HTTPException)
+@app.errorhandler(HTTPException)
 def handle_exception(e):
     response = e.get_response()
     response.data = json.dumps({

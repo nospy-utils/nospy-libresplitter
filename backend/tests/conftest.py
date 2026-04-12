@@ -1,6 +1,6 @@
 import pytest
 
-import db as db_module
+from database import db as db_module
 from app import app
 
 

@@ -1,7 +1,7 @@
 import sqlite3
 import logging
 
-from db import get_db
+from database import get_db
 from models import User
 from daos.exceptions import ServiceInternalException, ServiceUnavailableException
 

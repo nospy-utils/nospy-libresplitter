@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Open Splitwise</title>
     <link href="vendor/css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/signin.css" rel="stylesheet">
+    <link href="css/signup.css" rel="stylesheet">
 </head>
 
 <body>
@@ -15,10 +15,14 @@
         <form>
             <img class="mb-4" src="img/logo.png" alt="" width="72">
             <span>Open Splitwise</span>
-            <h1 class="h3 mb-3 fw-normal">Sign in</h1>
+            <h1 class="h3 mb-3 fw-normal">Sign up</h1>
 
             <div class="form-floating">
-                <input type="email" class="form-control" id="email" placeholder="name@example.com">
+                <input type="text" class="form-control" id="name" placeholder="Your name" autocomplete="given-name">
+                <label for="name">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="email" class="form-control" id="email" placeholder="name@example.com" autocomplete="off">
                 <label for="email">Email address</label>
             </div>
             <div class="form-floating">
@@ -26,15 +30,8 @@
                 <label for="password">Password</label>
             </div>
 
-            <div class="form-check text-start my-3">
-                <input class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault">
-                <label class="form-check-label" for="flexCheckDefault">
-                    Remember me
-                </label>
-            </div>
-
             <div class="row gy-2">
-                <button class="btn btn-primary py-2" type="submit">Sign in</button>
+                <button class="btn btn-primary py-2" type="submit">Sign up</button>
             </div>
         </form>
     </div>
