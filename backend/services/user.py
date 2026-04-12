@@ -8,12 +8,14 @@ from services.exceptions import UserInputValidationException, InvalidCredentials
 
 class UserService:
 
+    def __init__(self):
+        self.user_dao = UserDAO()
+
     def authenticate(self, email: str, password: str) -> User:
         if not email or not password:
             raise UserInputValidationException("Email and password are required.")
 
-        dao = UserDAO()
-        row = dao.find_by_email(email)
+        row = self.user_dao.find_by_email(email)
 
         if row is None or not check_password_hash(row["password"], password):
             raise InvalidCredentialsException()
@@ -39,5 +41,4 @@ class UserService:
         if len(password) < 8:
             raise UserInputValidationException('Password must be at least 8 characters.')
 
-        dao = UserDAO()
-        dao.save_user(user)
+        self.user_dao.save_user(user)

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 
 from services import UserService
 
-users_bp = Blueprint("users", __name__, url_prefix="/api")
+users_bp = Blueprint("users", __name__, url_prefix="/api/users")
 
 
 @users_bp.post("/signup")

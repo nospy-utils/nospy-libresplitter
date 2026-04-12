@@ -2,23 +2,20 @@
 # Helpers
 # ---------------------------------------------------------------------------
 
+PREFIX = "/api/users"
+
 def signup(client, name="user", email="user@example.com", password="password123"):
     return client.post(
-        "/api/signup",
+        f"{PREFIX}/signup",
         json={"name": name, "email": email, "password": password},
     )
 
 
 def signin(client, email="user@example.com", password="password123", remember_me=False):
     return client.post(
-        "/api/signin",
+        f"{PREFIX}/signin",
         json={"email": email, "password": password, "remember_me": remember_me},
     )
-
-
-# ---------------------------------------------------------------------------
-# /api/signup
-# ---------------------------------------------------------------------------
 
 class TestSignup:
     def test_success_returns_201(self, client):
@@ -38,19 +35,19 @@ class TestSignup:
         assert r.status_code == 500
 
     def test_missing_email_returns_400(self, client):
-        r = client.post("/api/signup", json={"password": "password123"})
+        r = client.post(f"{PREFIX}/signup", json={"password": "password123"})
         assert r.status_code == 400
 
     def test_missing_password_returns_400(self, client):
-        r = client.post("/api/signup", json={"email": "user@example.com"})
+        r = client.post(f"{PREFIX}/signup", json={"email": "user@example.com"})
         assert r.status_code == 400
 
     def test_empty_body_returns_400(self, client):
-        r = client.post("/api/signup", json={})
+        r = client.post(f"{PREFIX}/signup", json={})
         assert r.status_code == 400
 
     def test_non_json_body_returns_400(self, client):
-        r = client.post("/api/signup", data="not-json", content_type="text/plain")
+        r = client.post(f"{PREFIX}/signup", data="not-json", content_type="text/plain")
         assert r.status_code == 400
 
     def test_password_too_short_returns_400(self, client):
@@ -62,10 +59,6 @@ class TestSignup:
         r = signup(client, password="12345678")
         assert r.status_code == 201
 
-
-# ---------------------------------------------------------------------------
-# /api/signin
-# ---------------------------------------------------------------------------
 
 class TestSignin:
     def test_success_returns_200_with_email(self, client):
@@ -85,12 +78,12 @@ class TestSignin:
         assert "invalid email or password" in r.get_json()["description"].lower()
 
     def test_missing_email_returns_400(self, client):
-        r = client.post("/api/signin", json={"password": "password123"})
+        r = client.post(f"{PREFIX}/signin", json={"password": "password123"})
         assert r.status_code == 400
         assert "required" in r.get_json()["description"].lower()
 
     def test_missing_password_returns_400(self, client):
-        r = client.post("/api/signin", json={"email": "user@example.com"})
+        r = client.post(f"{PREFIX}/signin", json={"email": "user@example.com"})
         assert r.status_code == 400
         assert "required" in r.get_json()["description"].lower()
 
@@ -102,7 +95,7 @@ class TestSignin:
     def test_sets_session_on_success(self, client):
         signup(client)
         signin(client)
-        r = client.get("/api/me")
+        r = client.get(f"{PREFIX}/me")
         assert r.status_code == 200
         assert r.get_json()["email"] == "user@example.com"
 
@@ -121,40 +114,32 @@ class TestSignin:
             assert sess.permanent
 
 
-# ---------------------------------------------------------------------------
-# /api/signout
-# ---------------------------------------------------------------------------
-
 class TestSignout:
     def test_signout_clears_session(self, client):
         signup(client)
         signin(client)
-        client.post("/api/signout")
-        r = client.get("/api/me")
+        client.post(f"{PREFIX}/signout")
+        r = client.get(f"{PREFIX}/me")
         assert r.status_code == 401
 
     def test_signout_returns_200(self, client):
-        r = client.post("/api/signout")
+        r = client.post(f"{PREFIX}/signout")
         assert r.status_code == 200
 
     def test_signout_without_session_still_returns_200(self, client):
-        r = client.post("/api/signout")
+        r = client.post(f"{PREFIX}/signout")
         assert r.status_code == 200
 
 
-# ---------------------------------------------------------------------------
-# /api/me
-# ---------------------------------------------------------------------------
-
 class TestMe:
     def test_unauthenticated_returns_401(self, client):
-        r = client.get("/api/me")
+        r = client.get(f"{PREFIX}/me")
         assert r.status_code == 401
 
     def test_authenticated_returns_user_info(self, client):
         signup(client)
         signin(client)
-        r = client.get("/api/me")
+        r = client.get(f"{PREFIX}/me")
         assert r.status_code == 200
         body = r.get_json()
         assert body["email"] == "user@example.com"
@@ -163,6 +148,6 @@ class TestMe:
     def test_after_signout_returns_401(self, client):
         signup(client)
         signin(client)
-        client.post("/api/signout")
-        r = client.get("/api/me")
+        client.post(f"{PREFIX}/signout")
+        r = client.get(f"{PREFIX}/me")
         assert r.status_code == 401
