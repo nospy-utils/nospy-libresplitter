@@ -3,12 +3,19 @@ import os
 
 from werkzeug.exceptions import HTTPException
 from flask import Flask
+from flask_cors import CORS
+
 
 from database.db import init_db
 from blueprints import users_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
+
+cors = CORS(app, resources={r"/api/*": {"origins": [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]}})
 
 init_db()
 
