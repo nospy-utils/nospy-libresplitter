@@ -1,0 +1,11 @@
+Dockerfile
+requirements-dev.txt
+splitwise.db
+pyproject.toml
+loadtest.jmx
+.venv
+tests
+.pytest_cache
+__pycache__
+.idea
+.dockerignore
