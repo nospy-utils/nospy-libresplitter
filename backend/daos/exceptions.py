@@ -7,3 +7,11 @@ class ServiceInternalException(HTTPException):
 
     def __init__(self, description: str):
         super().__init__(description)
+
+
+class ServiceUnavailableException(HTTPException):
+
+    code = 503
+
+    def __init__(self, description: str):
+        super().__init__(description)

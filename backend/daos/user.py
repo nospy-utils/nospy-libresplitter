@@ -3,7 +3,7 @@ import logging
 
 from db import get_db
 from models import User
-from daos.exceptions import ServiceInternalException
+from daos.exceptions import ServiceInternalException, ServiceUnavailableException
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -17,6 +17,9 @@ class UserDAO(object):
                 return conn.execute(
                     "SELECT id, name, email, password FROM users WHERE email = ?", (email,)
                 ).fetchone()
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
         except sqlite3.DatabaseError as e:
             logger.exception(e)
             raise ServiceInternalException("Error looking up user")
@@ -29,6 +32,9 @@ class UserDAO(object):
                     "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
                     (user.name, user.email, pass_hash),
                 )
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
         except sqlite3.DatabaseError as e:
             logger.exception(e)
             raise ServiceInternalException("Error saving user")
