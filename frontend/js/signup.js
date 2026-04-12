@@ -12,13 +12,8 @@ document.querySelector('form').addEventListener('submit', async function (e) {
         return;
     }
 
-    let errorMessage;
-    try {
-        const data = await response.json();
-        errorMessage = data.error || data.message || JSON.stringify(data);
-    } catch {
-        errorMessage = await response.text();
-    }
+    const data = await response.json();
+    const errorMessage = `${data.name} - ${data.description}`
 
     const errorEl = document.getElementById('signup-error');
     errorEl.textContent = errorMessage;
