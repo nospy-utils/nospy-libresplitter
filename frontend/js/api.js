@@ -1,5 +1,6 @@
 const API_BASE = 'http://localhost:5000';
 const API_USERS_SIGNUP = API_BASE + '/api/users/signup';
+const API_USERS_ME = API_BASE + '/api/users/me';
 
 async function apiPost(url, body) {
     const MAX_RETRIES = 3;

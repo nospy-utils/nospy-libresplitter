@@ -15,7 +15,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 cors = CORS(app, resources={r"/api/*": {"origins": [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
-]}})
+], "supports_credentials": True}})
 
 init_db()
 
