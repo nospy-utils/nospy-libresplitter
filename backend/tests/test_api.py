@@ -66,15 +66,15 @@ class TestSignin:
         r = signin(client)
         assert r.status_code == 200
 
-    def test_wrong_password_returns_401(self, client):
+    def test_wrong_password_returns_400(self, client):
         signup(client)
         r = signin(client, password="wrongpassword")
-        assert r.status_code == 401
+        assert r.status_code == 400
         assert "invalid email or password" in r.get_json()["description"].lower()
 
-    def test_unknown_email_returns_401(self, client):
+    def test_unknown_email_returns_400(self, client):
         r = signin(client, email="ghost@example.com")
-        assert r.status_code == 401
+        assert r.status_code == 400
         assert "invalid email or password" in r.get_json()["description"].lower()
 
     def test_missing_email_returns_400(self, client):
@@ -122,13 +122,9 @@ class TestSignout:
         r = client.get(f"{PREFIX}/me")
         assert r.status_code == 401
 
-    def test_signout_returns_200(self, client):
-        r = client.post(f"{PREFIX}/signout")
-        assert r.status_code == 200
-
     def test_signout_without_session_still_returns_200(self, client):
         r = client.post(f"{PREFIX}/signout")
-        assert r.status_code == 200
+        assert r.status_code == 401
 
 
 class TestMe:

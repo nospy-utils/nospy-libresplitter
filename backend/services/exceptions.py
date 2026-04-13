@@ -11,7 +11,14 @@ class UserInputValidationException(HTTPException):
 
 class InvalidCredentialsException(HTTPException):
 
-    code = 401
+    code = 400
 
     def __init__(self, description: str = "Invalid email or password."):
+        super().__init__(description)
+
+class UserNotAuthenticatedException(HTTPException):
+
+    code = 401
+
+    def __init__(self, description: str = "User is not authenticated."):
         super().__init__(description)

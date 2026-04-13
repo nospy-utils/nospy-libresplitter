@@ -1,2 +1,3 @@
 from services.user import UserService
 from services.exceptions import UserInputValidationException, InvalidCredentialsException
+from services.auth import login_required

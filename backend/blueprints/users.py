@@ -1,9 +1,8 @@
 from flask import Blueprint, request, jsonify, session
 
-from services import UserService
+from services import UserService, login_required
 
 users_bp = Blueprint("users", __name__, url_prefix="/api/users")
-
 
 @users_bp.post("/signup")
 def signup():
@@ -38,13 +37,13 @@ def signin():
 
 
 @users_bp.post("/signout")
+@login_required
 def signout():
     session.clear()
     return jsonify({"message": "Signed out successfully."}), 200
 
 
 @users_bp.get("/me")
+@login_required
 def me():
-    if "user_id" not in session:
-        return jsonify({"error": "Not authenticated."}), 401
     return jsonify({"user_id": session["user_id"], "email": session["email"]}), 200
