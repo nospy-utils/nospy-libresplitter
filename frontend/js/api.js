@@ -4,6 +4,7 @@ const API_USERS_ME = API_BASE + '/api/users/me';
 const API_USERS_SIGNIN = API_BASE + '/api/users/signin';
 const API_USERS_SIGNOUT = API_BASE + '/api/users/signout';
 const API_FRIENDS = API_BASE + '/api/friends';
+const API_EXPENSES_ME = API_BASE + '/api/expenses/me';
 
 async function apiPost(url, body) {
     const MAX_RETRIES = 3;

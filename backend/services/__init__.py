@@ -1,5 +1,6 @@
 from services.user import UserService
 from services.friend import FriendService
+from services.expense import ExpenseService
 from services.exceptions import (UserInputValidationException,
                                  InvalidCredentialsException,
                                  UserNotAuthenticatedException)
