@@ -7,7 +7,7 @@ from flask_cors import CORS
 
 
 from database.db import init_db
-from blueprints import users_bp
+from blueprints import users_bp, friends_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
@@ -20,6 +20,7 @@ cors = CORS(app, resources={r"/api/*": {"origins": [
 init_db()
 
 app.register_blueprint(users_bp)
+app.register_blueprint(friends_bp)
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):

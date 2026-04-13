@@ -22,3 +22,27 @@ class UserNotAuthenticatedException(HTTPException):
 
     def __init__(self, description: str = "User is not authenticated."):
         super().__init__(description)
+
+
+class UserNotFoundException(HTTPException):
+
+    code = 404
+
+    def __init__(self, description: str = "User not found."):
+        super().__init__(description)
+
+
+class FriendNotFoundException(HTTPException):
+
+    code = 404
+
+    def __init__(self, description: str = "User not found."):
+        super().__init__(description)
+
+
+class FriendAlreadyExistsException(HTTPException):
+
+    code = 409
+
+    def __init__(self, description: str = "Already friends with this user."):
+        super().__init__(description)

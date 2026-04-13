@@ -3,7 +3,7 @@ from werkzeug.security import check_password_hash
 from models import User
 
 from daos import UserDAO
-from services.exceptions import UserInputValidationException, InvalidCredentialsException
+from services.exceptions import UserInputValidationException, InvalidCredentialsException, UserNotFoundException
 
 
 class UserService:
@@ -27,6 +27,18 @@ class UserService:
         )
 
         return user
+
+    def get_user_by_id(self, user_id: int) -> User:
+        row = self.user_dao.find_by_id(user_id)
+        if row is None:
+            raise UserNotFoundException()
+        return User(user_id=row["id"], name=row["name"], email=row["email"])
+
+    def find_by_email(self, user_email: str) -> User:
+        row = self.user_dao.find_by_email(user_email)
+        if row is None:
+            raise UserNotFoundException()
+        return User(user_id=row["id"], name=row["name"], email=row["email"])
 
     def save_user(self, name:str, email:str, password:str) -> None:
         user = User(

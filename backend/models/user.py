@@ -10,3 +10,11 @@ class User(object):
 
     def generate_password_hash(self) -> str:
         return generate_password_hash(self.password)
+
+    def __eq__(self, other):
+        if not isinstance(other, User):
+            return NotImplemented
+
+        return (self.user_id == other.user_id and
+                self.name == other.name and
+                self.email == other.email)
