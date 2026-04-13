@@ -23,12 +23,11 @@ def signin():
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
-    remember = bool(data.get("remember_me", False))
 
     service = UserService()
     user = service.authenticate(email, password)
 
-    session.permanent = remember
+    session.permanent = True
     session["user_id"] = user.user_id
     session["name"] = user.name
     session["email"] = user.email
