@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 class ExpenseDAO(object):
 
     def get_totals_by_currency(self, user: User) -> list:
-        """Returns how much the user owes/is owed per currency."""
         try:
             with get_db() as conn:
                 rows = conn.execute(
@@ -61,3 +60,32 @@ class ExpenseDAO(object):
         except sqlite3.DatabaseError as e:
             logger.exception(e)
             raise ServiceInternalException("Error fetching friend expense totals")
+
+    def get_activity(self, user: User) -> list:
+        try:
+            with get_db() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT
+                      e.id,
+                      uf.name AS from_user_name,
+                      (eu.from_user_id = ?) AS is_it_me,
+                      e.description,
+                      e.currency,
+                      eu.value,
+                      e.created_at
+                    FROM expenses e
+                    INNER JOIN expense_user eu ON e.id = eu.expense_id
+                    INNER JOIN users uf ON eu.from_user_id = uf.id
+                    WHERE eu.from_user_id = ? OR eu.to_user_id = ?
+                    ORDER BY e.id DESC
+                    """,
+                    (user.user_id, user.user_id, user.user_id),
+                ).fetchall()
+                return [dict(r) for r in rows]
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error fetching activity")

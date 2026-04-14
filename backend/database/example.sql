@@ -35,3 +35,18 @@ INNER JOIN expense_user eu ON e.id = eu.expense_id
 WHERE eu.from_user_id = 3 OR eu.to_user_id = 3
 GROUP BY friend_id, e.currency;
 
+-- returns activities
+SELECT
+  e.id,
+  uf.name AS from_user_name,
+  (eu.from_user_id = 1) AS is_it_me,
+  e.description,
+  e.currency,
+  eu.value,
+  e.created_at
+FROM expenses e
+INNER JOIN expense_user eu ON e.id = eu.expense_id
+INNER JOIN users uf ON eu.from_user_id = uf.id
+WHERE eu.from_user_id = 1 OR eu.to_user_id = 1
+ORDER BY e.id DESC;
+

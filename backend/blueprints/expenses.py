@@ -12,3 +12,12 @@ def get_my_expenses():
     service = ExpenseService()
     data = service.get_my_expenses(user)
     return jsonify(data), 200
+
+
+@expenses_bp.get("/activity")
+@login_required
+def get_activity():
+    user = get_session_user()
+    service = ExpenseService()
+    data = service.get_activity(user)
+    return jsonify(data), 200

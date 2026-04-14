@@ -9,6 +9,9 @@ class ExpenseService:
     def __init__(self):
         self.expense_dao = ExpenseDAO()
 
+    def get_activity(self, user: User) -> list:
+        return self.expense_dao.get_activity(user)
+
     def get_my_expenses(self, user: User) -> dict:
         totals_by_currency = self.expense_dao.get_totals_by_currency(user)
         flat_by_friend = self.expense_dao.get_totals_by_friend(user)
