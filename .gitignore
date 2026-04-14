@@ -161,4 +161,4 @@ cython_debug/
 
 # Node
 node_modules/
-/backend/splitwise.db
+/backend/volumes/database/splitwise.db
