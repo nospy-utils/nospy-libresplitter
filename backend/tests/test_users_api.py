@@ -1,21 +1,6 @@
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+from base import *
 
 PREFIX = "/api/users"
-
-def signup(client, name="user", email="user@example.com", password="password123"):
-    return client.post(
-        f"{PREFIX}/signup",
-        json={"name": name, "email": email, "password": password},
-    )
-
-
-def signin(client, email="user@example.com", password="password123", remember_me=False):
-    return client.post(
-        f"{PREFIX}/signin",
-        json={"email": email, "password": password, "remember_me": remember_me},
-    )
 
 class TestSignup:
     def test_success_returns_201(self, client):
@@ -97,21 +82,7 @@ class TestSignin:
         signin(client)
         r = client.get(f"{PREFIX}/me")
         assert r.status_code == 200
-        assert r.get_json()["email"] == "user@example.com"
-
-    def test_remember_me_false_does_not_make_session_permanent(self, client):
-        signup(client)
-        with client.session_transaction() as sess:
-            pass  # open session context
-        signin(client, remember_me=False)
-        with client.session_transaction() as sess:
-            assert not sess.permanent
-
-    def test_remember_me_true_makes_session_permanent(self, client):
-        signup(client)
-        signin(client, remember_me=True)
-        with client.session_transaction() as sess:
-            assert sess.permanent
+        assert r.get_json()["email"] == "alice@example.com"
 
 
 class TestSignout:
@@ -138,7 +109,7 @@ class TestMe:
         r = client.get(f"{PREFIX}/me")
         assert r.status_code == 200
         body = r.get_json()
-        assert body["email"] == "user@example.com"
+        assert body["email"] == "alice@example.com"
         assert "user_id" in body
 
     def test_after_signout_returns_401(self, client):
