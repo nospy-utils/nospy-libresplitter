@@ -1,4 +1,4 @@
-from daos import UserDAO, FriendDAO
+from daos import FriendDAO
 from models import User
 from services import UserService
 from services.exceptions import FriendNotFoundException, UserInputValidationException
@@ -21,6 +21,9 @@ class FriendService:
             raise UserInputValidationException("You cannot add yourself as a friend.")
 
         self.friend_dao.add_friend(current_user, friend)
+
+    def are_friends(self, user: User, other_user: User) -> bool:
+        return self.friend_dao.are_friends(user, other_user)
 
     def list_friends(self, current_user_id: User) -> list:
         return self.friend_dao.list_friends(current_user_id)

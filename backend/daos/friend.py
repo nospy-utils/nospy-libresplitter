@@ -29,6 +29,30 @@ class FriendDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error saving friend relationship")
 
+    def are_friends(self, user: User, other_user: User) -> bool:
+        try:
+            with get_db() as conn:
+                row = conn.execute(
+                    """
+                    SELECT 1
+                    FROM friends f
+                    JOIN users u ON (f.friend_1 = u.id OR f.friend_2 = u.id)
+                    WHERE
+                        ((f.friend_1 = ? AND f.friend_2 = ?) OR
+                        (f.friend_1 = ? AND f.friend_2 = ?)) AND
+                        u.id != ?
+                    ORDER BY u.name
+                    """,
+                    (user.user_id, other_user.user_id, other_user.user_id, user.user_id, other_user.user_id),
+                ).fetchone()
+                return row is not None
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error checking friend relationship")
+
     def list_friends(self, user: User) -> list:
         try:
             with get_db() as conn:
