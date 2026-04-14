@@ -1,0 +1,7 @@
+services:
+  frontend:
+    volumes:
+      - ./frontend/output:/usr/share/nginx/html:z
+  backend:
+    volumes:
+      - ./backend/volumes/database:/app/volumes/database:z

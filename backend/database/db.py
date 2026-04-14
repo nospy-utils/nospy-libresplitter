@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "../splitwise.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "../volumes/database/splitwise.db")
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "./schema.sql")
 
 

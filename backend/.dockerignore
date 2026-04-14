@@ -1,6 +1,6 @@
 Dockerfile
 requirements-dev.txt
-splitwise.db
+volumes/database/splitwise.db
 pyproject.toml
 loadtest.jmx
 .venv
