@@ -71,6 +71,7 @@ class ExpenseDAO(object):
                       CASE WHEN eu.from_user_id = ? THEN 'You' ELSE uf.name END AS from_user_name,
                       e.description,
                       e.currency,
+                      e.value AS expense_total,
                       eu.value,
                       e.created_at
                     FROM expenses e
