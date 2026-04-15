@@ -44,7 +44,7 @@ function renderExpenses(friendName, expenses) {
         return;
     }
 
-    list.innerHTML = expenses.map(({ from_user_name, description, currency, value, created_at }) => {
+    list.innerHTML = expenses.map(({ from_user_name, description, currency, expense_total, value, created_at }) => {
         const { month, day } = formatDate(created_at);
         const iPaid = from_user_name === 'You';
         const payerLabel = iPaid ? 'You paid' : `${friendName} paid`;
@@ -78,7 +78,7 @@ function renderExpenses(friendName, expenses) {
                 </div>
                 <div class="row">
                     <div class="col">
-                        <small>${payerLabel}</small>
+                        <small>${payerLabel} ${currency} ${formatAmount(expense_total)}</small>
                     </div>
                 </div>
             </div>
@@ -102,6 +102,9 @@ function renderExpenses(friendName, expenses) {
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('user_id');
     if (!userId) return;
+
+    // update controls
+    document.getElementById("friend-details-settle-user-id").value = userId;
 
     const response = await apiGet(`${API_EXPENSES_FRIEND}/${userId}`);
     if (!response.ok) {
