@@ -10,7 +10,7 @@ class ExpenseService:
     def __init__(self):
         self.expense_dao = ExpenseDAO()
 
-    def get_expenses_with_friend(self, user: User, friend_id: int) -> list:
+    def get_expenses_with_friend(self, user: User, friend_id: int) -> dict:
         from services.friend import FriendService
         from services.user import UserService
 
@@ -18,7 +18,8 @@ class ExpenseService:
         if not FriendService().are_friends(user, friend):
             raise NotFriendsException()
 
-        return self.expense_dao.get_expenses_with_friend(user, friend_id)
+        expenses = self.expense_dao.get_expenses_with_friend(user, friend_id)
+        return {"friend_name": friend.name, "expenses": expenses}
 
     def get_activity(self, user: User) -> list:
         return self.expense_dao.get_activity(user)

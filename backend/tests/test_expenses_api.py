@@ -378,7 +378,23 @@ class TestGetExpensesWithFriend:
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
         assert r.status_code == 200
-        assert r.get_json() == []
+        data = r.get_json()
+        assert data["friend_name"] == "bob"
+        assert data["expenses"] == []
+
+    def test_response_contains_friend_name(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        assert r.get_json()["friend_name"] == "bob"
 
     def test_from_user_name_is_you_when_current_user_paid(self, client):
         signup_and_signin(client)
@@ -394,9 +410,9 @@ class TestGetExpensesWithFriend:
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
         assert r.status_code == 200
-        data = r.get_json()
-        assert len(data) == 1
-        assert data[0]["from_user_name"] == "You"
+        expenses = r.get_json()["expenses"]
+        assert len(expenses) == 1
+        assert expenses[0]["from_user_name"] == "You"
 
     def test_from_user_name_is_friend_name_when_friend_paid(self, client):
         signup_and_signin(client)
@@ -412,9 +428,9 @@ class TestGetExpensesWithFriend:
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
         assert r.status_code == 200
-        data = r.get_json()
-        assert len(data) == 1
-        assert data[0]["from_user_name"] == "bob"
+        expenses = r.get_json()["expenses"]
+        assert len(expenses) == 1
+        assert expenses[0]["from_user_name"] == "bob"
 
     def test_response_contains_required_fields(self, client):
         signup_and_signin(client)
@@ -429,7 +445,10 @@ class TestGetExpensesWithFriend:
         seed_expense(alice_id, bob_id, description="lunch", currency="USD", value=12.0)
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
-        row = r.get_json()[0]
+        data = r.get_json()
+        assert "friend_name" in data
+        assert "expenses" in data
+        row = data["expenses"][0]
         for field in ("id", "from_user_name", "description", "currency", "value", "created_at"):
             assert field in row, f"missing field: {field}"
 
@@ -448,7 +467,7 @@ class TestGetExpensesWithFriend:
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
         assert r.status_code == 200
-        descriptions = {row["description"] for row in r.get_json()}
+        descriptions = {row["description"] for row in r.get_json()["expenses"]}
         assert descriptions == {"alice paid", "bob paid"}
 
     def test_ordered_newest_first(self, client):
@@ -465,9 +484,9 @@ class TestGetExpensesWithFriend:
         second_id = seed_expense(alice_id, bob_id, description="second")
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
-        data = r.get_json()
-        assert data[0]["id"] == second_id
-        assert data[1]["id"] == first_id
+        expenses = r.get_json()["expenses"]
+        assert expenses[0]["id"] == second_id
+        assert expenses[1]["id"] == first_id
 
     def test_excludes_expenses_not_involving_the_friend(self, client):
         signup_and_signin(client)
@@ -488,9 +507,9 @@ class TestGetExpensesWithFriend:
         seed_expense(alice_id, carol_id, description="with carol")
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
-        data = r.get_json()
-        assert len(data) == 1
-        assert data[0]["description"] == "with bob"
+        expenses = r.get_json()["expenses"]
+        assert len(expenses) == 1
+        assert expenses[0]["description"] == "with bob"
 
     def test_correct_values_returned(self, client):
         signup_and_signin(client)
@@ -505,7 +524,7 @@ class TestGetExpensesWithFriend:
         seed_expense(alice_id, bob_id, description="pizza", currency="EUR", value=42.0)
 
         r = client.get(f"{PREFIX}/friend/{bob_id}")
-        row = r.get_json()[0]
+        row = r.get_json()["expenses"][0]
         assert row["description"] == "pizza"
         assert row["currency"] == "EUR"
         assert row["value"] == 42.0
