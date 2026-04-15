@@ -2,6 +2,11 @@ from base import *
 from database import db as db_module
 
 PREFIX = "/api/expenses"
+FRIENDS_PREFIX = "/api/friends"
+
+
+def add_friend(client, email):
+    return client.post(FRIENDS_PREFIX, json={"email": email})
 
 
 # ---------------------------------------------------------------------------
@@ -333,3 +338,174 @@ class TestGetMyExpenses:
         data = r.get_json()
         assert data["totals_by_currency"] == []
         assert data["totals_by_friend"] == []
+
+
+# ---------------------------------------------------------------------------
+# GET /api/expenses/friend/<friend_id>
+# ---------------------------------------------------------------------------
+
+class TestGetExpensesWithFriend:
+    def test_unauthenticated_returns_401(self, client):
+        r = client.get(f"{PREFIX}/friend/1")
+        assert r.status_code == 401
+
+    def test_nonexistent_friend_id_returns_404(self, client):
+        signup_and_signin(client)
+
+        r = client.get(f"{PREFIX}/friend/9999")
+        assert r.status_code == 404
+
+    def test_not_friends_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 400
+
+    def test_empty_list_when_friends_but_no_expenses(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        assert r.get_json() == []
+
+    def test_from_user_name_is_you_when_current_user_paid(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(alice_id, bob_id, description="dinner")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["from_user_name"] == "You"
+
+    def test_from_user_name_is_friend_name_when_friend_paid(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, description="coffee")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["from_user_name"] == "bob"
+
+    def test_response_contains_required_fields(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(alice_id, bob_id, description="lunch", currency="USD", value=12.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        row = r.get_json()[0]
+        for field in ("id", "from_user_name", "description", "currency", "value", "created_at"):
+            assert field in row, f"missing field: {field}"
+
+    def test_returns_expenses_from_both_directions(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(alice_id, bob_id, description="alice paid")
+        seed_expense(bob_id, alice_id, description="bob paid")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        descriptions = {row["description"] for row in r.get_json()}
+        assert descriptions == {"alice paid", "bob paid"}
+
+    def test_ordered_newest_first(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        first_id = seed_expense(alice_id, bob_id, description="first")
+        second_id = seed_expense(alice_id, bob_id, description="second")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        data = r.get_json()
+        assert data[0]["id"] == second_id
+        assert data[1]["id"] == first_id
+
+    def test_excludes_expenses_not_involving_the_friend(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+        signup(client, name="carol", email="carol@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="carol@example.com")
+        carol_id = get_user_id(client, "carol@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        add_friend(client, "carol@example.com")
+        seed_expense(alice_id, bob_id, description="with bob")
+        seed_expense(alice_id, carol_id, description="with carol")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["description"] == "with bob"
+
+    def test_correct_values_returned(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(alice_id, bob_id, description="pizza", currency="EUR", value=42.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        row = r.get_json()[0]
+        assert row["description"] == "pizza"
+        assert row["currency"] == "EUR"
+        assert row["value"] == 42.0

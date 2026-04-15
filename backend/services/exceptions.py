@@ -46,3 +46,11 @@ class FriendAlreadyExistsException(HTTPException):
 
     def __init__(self, description: str = "Already friends with this user."):
         super().__init__(description)
+
+
+class NotFriendsException(HTTPException):
+
+    code = 400
+
+    def __init__(self, description: str = "You are not friends with this user."):
+        super().__init__(description)

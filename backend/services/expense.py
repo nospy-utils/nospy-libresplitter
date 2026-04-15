@@ -2,12 +2,23 @@ from typing import Any
 
 from daos import ExpenseDAO
 from models import User
+from services.exceptions import NotFriendsException
 
 
 class ExpenseService:
 
     def __init__(self):
         self.expense_dao = ExpenseDAO()
+
+    def get_expenses_with_friend(self, user: User, friend_id: int) -> list:
+        from services.friend import FriendService
+        from services.user import UserService
+
+        friend = UserService().get_user_by_id(friend_id)
+        if not FriendService().are_friends(user, friend):
+            raise NotFriendsException()
+
+        return self.expense_dao.get_expenses_with_friend(user, friend_id)
 
     def get_activity(self, user: User) -> list:
         return self.expense_dao.get_activity(user)

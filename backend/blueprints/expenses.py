@@ -14,6 +14,15 @@ def get_my_expenses():
     return jsonify(data), 200
 
 
+@expenses_bp.get("/friend/<int:friend_id>")
+@login_required
+def get_expenses_with_friend(friend_id):
+    user = get_session_user()
+    service = ExpenseService()
+    data = service.get_expenses_with_friend(user, friend_id)
+    return jsonify(data), 200
+
+
 @expenses_bp.get("/activity")
 @login_required
 def get_activity():
