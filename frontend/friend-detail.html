@@ -27,7 +27,18 @@
             <span id="error-message"></span>
         </div>
 
+
+        <div class="row">
+            <div class="col">
+                <form id="friend-details-settle-form" method="get" action="settle.html">
+                    <input type="hidden" name="user_id" id="friend-details-settle-user-id">
+                    <button class="btn btn-warning w-25" type="submit">Settle up</button>
+                </form>
+            </div>
+        </div>
+
         <div id="expenses-list"></div>
+
     </div>
 
     @@include('./footer.html')

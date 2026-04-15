@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Open Splitwise - Add Friend</title>
+    <link href="vendor/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/settle.css" rel="stylesheet">
+</head>
+<body>
+
+
+<div class="container-sm">
+    @@include('./header.html')
+
+    <nav class="navbar navbar-light navbar-expand-lg">
+        <div class="container-fluid">
+            <div class="d-flex">
+                <button class="btn btn-secondary" type="button" onclick="history.back()">Cancel</button>
+            </div>
+            <div class="d-flex">
+                <span>Settle up</span>
+            </div>
+            <form class="d-flex">
+                <button class="btn btn-primary" type="submit">Save</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="row py-4">
+        <div class="col fs-2 text-center">
+            <p>Which balance do you want to settle?</p>
+        </div>
+    </div>
+    <div class="row py-2 settle-row">
+        <div class="col-2 align-content-center">
+            <div class="settle-friend-thumbnail">
+                <img src="vendor/img/icons/person.svg" alt=""/>
+            </div>
+        </div>
+        <div class="col-6 align-content-center">
+            <h3 class="text-truncate">${friend_name}</h3>
+        </div>
+        <div class="col-4 align-content-center text-end">
+            <div class="row">
+                <div class="col">
+                    <span class="negative">you owe</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <span class="negative">NZD $50.00</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="row py-2 settle-row">
+        <div class="col-2 align-content-center">
+            <div class="settle-friend-thumbnail">
+                <img src="vendor/img/icons/person.svg" alt=""/>
+            </div>
+        </div>
+        <div class="col-6 align-content-center">
+            <h3 class="text-truncate">${friend_name}</h3>
+        </div>
+        <div class="col-4 align-content-center text-end">
+            <div class="row">
+                <div class="col">
+                    <span class="positive">owes you</span>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <span class="positive">BRL $10.00</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="vendor/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/signout.js"></script>
+<!--<script src="js/addfriend.js"></script>-->
+</body>
+</html>
