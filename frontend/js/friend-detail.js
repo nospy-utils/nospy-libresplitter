@@ -104,7 +104,12 @@ function renderExpenses(friendName, expenses) {
     if (!userId) return;
 
     const response = await apiGet(`${API_EXPENSES_FRIEND}/${userId}`);
-    if (!response.ok) return;
+    if (!response.ok) {
+        const { description } = await response.json();
+        document.getElementById('error-message').textContent = description;
+        document.getElementById('error-banner').classList.add('visible');
+        return;
+    }
 
     const { friend_name, expenses } = await response.json();
     renderSummary(friend_name, expenses);
