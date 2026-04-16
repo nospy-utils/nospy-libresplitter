@@ -27,6 +27,13 @@ class ExpenseService:
 
         return self.expense_dao.get_settle_up_amount(user, friend_id)
 
+    def settle_up(self, user: User, friend_id: int, currency: str, value: float, reverse: bool) -> None:
+        friend = UserService().get_user_by_id(friend_id)
+        if not FriendService().are_friends(user, friend):
+            raise NotFriendsException()
+
+        self.expense_dao.create_settle_up(user, friend, currency, value, reverse)
+
     def get_activity(self, user: User) -> list:
         return self.expense_dao.get_activity(user)
 

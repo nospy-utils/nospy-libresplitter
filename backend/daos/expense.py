@@ -125,6 +125,43 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error fetching settle up amount")
 
+    def create_settle_up(self, user: User, friend: User, currency: str, value: float, reverse: bool) -> None:
+        """Insert an expense + expense_user row representing a settle-up payment.
+
+        reverse=False → current user paid the friend  (from_user_id=user, to_user_id=friend)
+        reverse=True  → friend paid the current user  (from_user_id=friend, to_user_id=user)
+        """
+        if reverse:
+            from_user_id = friend.user_id
+            to_user_id = user.user_id
+        else:
+            from_user_id = user.user_id
+            to_user_id = friend.user_id
+
+        try:
+            with get_db() as conn:
+                cursor = conn.execute(
+                    """
+                    INSERT INTO expenses (user_created, currency, value, description)
+                    VALUES (?, ?, ?, 'Settled up')
+                    """,
+                    (user.user_id, currency, value),
+                )
+                expense_id = cursor.lastrowid
+                conn.execute(
+                    """
+                    INSERT INTO expense_user (expense_id, from_user_id, to_user_id, value)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (expense_id, from_user_id, to_user_id, value),
+                )
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error recording settle up")
+
     def get_activity(self, user: User) -> list:
         try:
             with get_db() as conn:

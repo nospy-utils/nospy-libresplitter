@@ -681,3 +681,178 @@ class TestGetSettleUp:
         assert len(data) == 2
         currencies = {row["currency"] for row in data}
         assert currencies == {"USD", "EUR"}
+
+
+# ---------------------------------------------------------------------------
+# POST /api/expenses/friend/<user_id>/settleup
+# ---------------------------------------------------------------------------
+
+class TestPostSettleUp:
+    def _settle(self, client, user_id, currency="USD", value=20.0, reverse=False):
+        return client.post(
+            f"{PREFIX}/friend/{user_id}/settleup",
+            json={"currency": currency, "value": value, "reverse": reverse},
+        )
+
+    def test_unauthenticated_returns_401(self, client):
+        r = client.post(f"{PREFIX}/friend/1/settleup", json={})
+        assert r.status_code == 401
+
+    def test_nonexistent_user_id_returns_404(self, client):
+        signup_and_signin(client)
+
+        r = self._settle(client, 9999)
+        assert r.status_code == 404
+
+    def test_not_friends_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        r = self._settle(client, bob_id)
+        assert r.status_code == 400
+
+    def test_missing_currency_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        r = client.post(f"{PREFIX}/friend/{bob_id}/settleup", json={"value": 10.0, "reverse": False})
+        assert r.status_code == 400
+
+    def test_missing_value_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        r = client.post(f"{PREFIX}/friend/{bob_id}/settleup", json={"currency": "USD", "reverse": False})
+        assert r.status_code == 400
+
+    def test_non_positive_value_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        r = client.post(
+            f"{PREFIX}/friend/{bob_id}/settleup",
+            json={"currency": "USD", "value": 0, "reverse": False},
+        )
+        assert r.status_code == 400
+
+    def test_invalid_reverse_type_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        r = client.post(
+            f"{PREFIX}/friend/{bob_id}/settleup",
+            json={"currency": "USD", "value": 10.0, "reverse": "yes"},
+        )
+        assert r.status_code == 400
+
+    def test_success_returns_201(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+
+        r = self._settle(client, bob_id, currency="USD", value=30.0, reverse=False)
+        assert r.status_code == 201
+
+    def test_reverse_false_current_user_is_payer(self, client):
+        """reverse=False: current user paid the friend — activity shows 'You' as payer."""
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        self._settle(client, bob_id, currency="USD", value=20.0, reverse=False)
+
+        r = client.get(f"{PREFIX}/activity")
+        data = r.get_json()
+        settle_rows = [row for row in data if row["description"] == "Settled up"]
+        assert len(settle_rows) == 1
+        assert settle_rows[0]["is_it_me"] == 1
+
+    def test_reverse_true_friend_is_payer(self, client):
+        """reverse=True: friend paid the current user — activity shows friend as payer."""
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        self._settle(client, bob_id, currency="USD", value=20.0, reverse=True)
+
+        r = client.get(f"{PREFIX}/activity")
+        data = r.get_json()
+        settle_rows = [row for row in data if row["description"] == "Settled up"]
+        assert len(settle_rows) == 1
+        assert settle_rows[0]["is_it_me"] == 0
+        assert settle_rows[0]["from_user_name"] == "bob"
+
+    def test_settle_up_zeroes_balance(self, client):
+        """After settling, net balance for that currency should be 0."""
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, currency="USD", value=40.0)  # alice owes bob 40
+
+        self._settle(client, bob_id, currency="USD", value=40.0, reverse=False)  # alice pays bob 40
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        data = r.get_json()
+        usd = next((row for row in data if row["currency"] == "USD"), None)
+        assert usd is None or usd["net_total"] == 0.0
+
+    def test_settle_up_recorded_with_correct_currency_and_value(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        self._settle(client, bob_id, currency="EUR", value=55.0, reverse=False)
+
+        r = client.get(f"{PREFIX}/activity")
+        data = r.get_json()
+        settle_rows = [row for row in data if row["description"] == "Settled up"]
+        assert len(settle_rows) == 1
+        assert settle_rows[0]["value"] == 55.0
