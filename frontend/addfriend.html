@@ -12,13 +12,19 @@
 
 <div class="container-sm">
     @@include('./header.html')
-    <nav class="navbar navbar-light">
-        <form action="friends.html">
-            <button class="btn btn-secondary w-100" type="submit">Cancel</button>
-        </form>
-        <form id="addfriend-form">
-            <button id="save-btn" class="btn btn-primary w-100" type="submit">Save</button>
-        </form>
+
+    <nav class="navbar navbar-light navbar-expand-lg">
+        <div class="container-fluid">
+            <div class="d-flex">
+                <button class="btn btn-secondary" type="button" onclick="history.back()">Cancel</button>
+            </div>
+            <div class="d-flex">
+                <span class="fs-4">Add friend</span>
+            </div>
+            <form class="d-flex" id="addfriend-form">
+                <button id="save-btn" class="btn btn-primary w-100" type="submit">Save</button>
+            </form>
+        </div>
     </nav>
 
     <div class="py-4">
