@@ -16,9 +16,6 @@ function formatAmount(value) {
         return;
     }
 
-    document.getElementById('settle-step2-ih-currency').value = currency;
-    document.getElementById('settle-step2-ih-value').value = formatAmount(Math.abs(total));
-
     const descEl = document.getElementById('settle-step2-fg-desc');
     if (reverse){
         descEl.innerText = `${friendName} paid you`;
@@ -26,6 +23,28 @@ function formatAmount(value) {
         descEl.innerText = `You paid ${friendName}`;
     }
 
-    document.getElementById('settle-step2-fg-currency').value = currency;
+    document.getElementById('settle-step2-fg-currency').textContent = currency;
     document.getElementById('settle-step2-fg-value').value = formatAmount(Math.abs(total));
+
+    document.getElementById('settle-step2-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const value = parseFloat(document.getElementById('settle-step2-fg-value').value);
+        const errorEl = document.getElementById('settle-step2-error');
+        errorEl.style.display = 'none';
+
+        const response = await apiPost(
+            `${API_EXPENSES_FRIEND}/${friendId}/settleup`,
+            JSON.stringify({ currency, value, reverse })
+        );
+
+        if (response.ok) {
+            window.location.href = `friend-detail.html?user_id=${friendId}`;
+            return;
+        }
+
+        const data = await response.json();
+        errorEl.textContent = data.description || 'Something went wrong.';
+        errorEl.style.display = 'block';
+    });
 })();

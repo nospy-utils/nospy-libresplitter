@@ -50,6 +50,7 @@ class ExpenseDAO(object):
                     INNER JOIN users u ON u.id = CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END
                     WHERE eu.from_user_id = ? OR eu.to_user_id = ?
                     GROUP BY friend_id, e.currency
+                    HAVING net_total != 0;
                     """,
                     (user.user_id, user.user_id, user.user_id, user.user_id, user.user_id),
                 ).fetchall()
@@ -113,7 +114,7 @@ class ExpenseDAO(object):
                         GROUP BY friend_id, e.currency
                     ) AS t
                     INNER JOIN users u ON t.friend_id = u.id
-                    WHERE t.friend_id = ?
+                    WHERE t.friend_id = ? AND t.net_total != 0
                     """,
                     (user.user_id, user.user_id, user.user_id, user.user_id, friend_id),
                 ).fetchall()

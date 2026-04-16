@@ -21,11 +21,14 @@ function renderSummary(friendName, expenses) {
         netByCurrency[currency] += from_user_name === 'You' ? value : -value;
     }
 
-    const currencies = Object.entries(netByCurrency);
+    let currencies = Object.entries(netByCurrency);
     if (currencies.length === 0) {
         summaryEl.textContent = 'You are settled up';
         return;
     }
+
+    // filter out currencies that have already been settled
+    currencies = currencies.filter(n => n[1] !== 0);
 
     const parts = currencies.map(([currency, net]) => {
         const cssClass = net >= 0 ? 'positive' : 'negative';
