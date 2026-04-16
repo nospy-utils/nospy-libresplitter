@@ -101,7 +101,7 @@ class ExpenseDAO(object):
                         t.friend_id,
                         u.name AS friend_name,
                         t.currency,
-                        ABS(t.net_total) AS owed_total
+                        t.net_total
                     FROM (
                         SELECT
                             CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END AS friend_id,
@@ -113,7 +113,7 @@ class ExpenseDAO(object):
                         GROUP BY friend_id, e.currency
                     ) AS t
                     INNER JOIN users u ON t.friend_id = u.id
-                    WHERE t.friend_id = ? AND t.net_total < 0
+                    WHERE t.friend_id = ?
                     """,
                     (user.user_id, user.user_id, user.user_id, user.user_id, friend_id),
                 ).fetchall()

@@ -21,9 +21,7 @@
             <div class="d-flex">
                 <span class="fs-4">Settle up</span>
             </div>
-            <form class="d-flex">
-                <button class="btn btn-primary" type="submit">Save</button>
-            </form>
+            <div class="d-flex"></div>
         </div>
     </nav>
 
@@ -32,52 +30,10 @@
             <p>Which balance do you want to settle?</p>
         </div>
     </div>
-    <div class="row py-2 settle-row">
-        <div class="col-2 align-content-center">
-            <div class="settle-friend-thumbnail">
-                <img src="vendor/img/icons/person.svg" alt=""/>
-            </div>
-        </div>
-        <div class="col-6 align-content-center">
-            <h3 class="text-truncate">${friend_name}</h3>
-        </div>
-        <div class="col-4 align-content-center text-end">
-            <div class="row">
-                <div class="col">
-                    <span class="negative">you owe</span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <span class="negative">NZD $50.00</span>
-                </div>
-            </div>
-
-        </div>
+    <div id="settle-empty" class="row py-2 d-none">
+        <div class="col text-center text-muted">You are settled up.</div>
     </div>
-    <div class="row py-2 settle-row">
-        <div class="col-2 align-content-center">
-            <div class="settle-friend-thumbnail">
-                <img src="vendor/img/icons/person.svg" alt=""/>
-            </div>
-        </div>
-        <div class="col-6 align-content-center">
-            <h3 class="text-truncate">${friend_name}</h3>
-        </div>
-        <div class="col-4 align-content-center text-end">
-            <div class="row">
-                <div class="col">
-                    <span class="positive">owes you</span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <span class="positive">BRL $10.00</span>
-                </div>
-            </div>
-
-        </div>
-    </div>
+    <div id="settle-rows"></div>
 </div>
 
 
@@ -85,6 +41,6 @@
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/signout.js"></script>
-<!--<script src="js/addfriend.js"></script>-->
+<script src="js/settle.js"></script>
 </body>
 </html>
