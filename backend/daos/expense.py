@@ -92,6 +92,39 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error fetching expenses with friend")
 
+    def get_settle_up_amount(self, user: User, friend_id: int) -> list:
+        try:
+            with get_db() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT
+                        t.friend_id,
+                        u.name AS friend_name,
+                        t.currency,
+                        ABS(t.net_total) AS owed_total
+                    FROM (
+                        SELECT
+                            CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END AS friend_id,
+                            e.currency,
+                            SUM(CASE WHEN eu.from_user_id = ? THEN eu.value ELSE -eu.value END) AS net_total
+                        FROM expenses e
+                        INNER JOIN expense_user eu ON e.id = eu.expense_id
+                        WHERE eu.from_user_id = ? OR eu.to_user_id = ?
+                        GROUP BY friend_id, e.currency
+                    ) AS t
+                    INNER JOIN users u ON t.friend_id = u.id
+                    WHERE t.friend_id = ? AND t.net_total < 0
+                    """,
+                    (user.user_id, user.user_id, user.user_id, user.user_id, friend_id),
+                ).fetchall()
+                return [dict(r) for r in rows]
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error fetching settle up amount")
+
     def get_activity(self, user: User) -> list:
         try:
             with get_db() as conn:

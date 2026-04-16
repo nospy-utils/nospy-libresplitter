@@ -528,3 +528,173 @@ class TestGetExpensesWithFriend:
         assert row["description"] == "pizza"
         assert row["currency"] == "EUR"
         assert row["value"] == 42.0
+
+
+# ---------------------------------------------------------------------------
+# GET /api/expenses/friend/<user_id>/settleup
+# ---------------------------------------------------------------------------
+
+class TestGetSettleUp:
+    def test_unauthenticated_returns_401(self, client):
+        r = client.get(f"{PREFIX}/friend/1/settleup")
+        assert r.status_code == 401
+
+    def test_nonexistent_user_id_returns_404(self, client):
+        signup_and_signin(client)
+
+        r = client.get(f"{PREFIX}/friend/9999/settleup")
+        assert r.status_code == 404
+
+    def test_not_friends_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 400
+
+    def test_empty_when_no_expenses(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        assert r.get_json() == []
+
+    def test_empty_when_current_user_is_owed_money(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        # Alice paid, bob owes alice — alice has nothing to settle up
+        seed_expense(alice_id, bob_id, currency="USD", value=50.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        assert r.get_json() == []
+
+    def test_returns_amount_when_current_user_owes_friend(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        # Bob paid, alice owes bob
+        seed_expense(bob_id, alice_id, currency="USD", value=40.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["owed_total"] == 40.0
+        assert data[0]["currency"] == "USD"
+
+    def test_response_contains_required_fields(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, currency="USD", value=10.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        row = r.get_json()[0]
+        for field in ("friend_id", "friend_name", "currency", "owed_total"):
+            assert field in row, f"missing field: {field}"
+
+    def test_friend_name_and_id_are_correct(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, currency="USD", value=10.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        row = r.get_json()[0]
+        assert row["friend_id"] == bob_id
+        assert row["friend_name"] == "bob"
+
+    def test_owed_total_aggregates_across_multiple_expenses(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, currency="USD", value=30.0)
+        seed_expense(bob_id, alice_id, currency="USD", value=20.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["owed_total"] == 50.0
+
+    def test_net_amount_when_expenses_go_both_ways(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, currency="USD", value=50.0)  # alice owes 50
+        seed_expense(alice_id, bob_id, currency="USD", value=20.0)  # alice is owed 20 — net: alice owes 30
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data) == 1
+        assert data[0]["owed_total"] == 30.0
+
+    def test_separate_entry_per_currency(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        seed_expense(bob_id, alice_id, currency="USD", value=40.0)
+        seed_expense(bob_id, alice_id, currency="EUR", value=15.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        data = r.get_json()
+        assert len(data) == 2
+        currencies = {row["currency"] for row in data}
+        assert currencies == {"USD", "EUR"}

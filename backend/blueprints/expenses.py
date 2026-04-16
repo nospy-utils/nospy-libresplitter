@@ -23,6 +23,15 @@ def get_expenses_with_friend(friend_id):
     return jsonify(data), 200
 
 
+@expenses_bp.get("/friend/<int:user_id>/settleup")
+@login_required
+def get_settle_up_amount(user_id):
+    user = get_session_user()
+    service = ExpenseService()
+    data = service.get_settle_up_amount(user, user_id)
+    return jsonify(data), 200
+
+
 @expenses_bp.get("/activity")
 @login_required
 def get_activity():

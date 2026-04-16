@@ -1,7 +1,7 @@
 from daos import FriendDAO
 from models import User
-from services import UserService
-from services.exceptions import FriendNotFoundException, UserInputValidationException
+from services.user import UserService
+from services.exceptions import UserInputValidationException
 
 
 class FriendService:

@@ -3,6 +3,8 @@ from typing import Any
 from daos import ExpenseDAO
 from models import User
 from services.exceptions import NotFriendsException
+from services.friend import FriendService
+from services.user import UserService
 
 
 class ExpenseService:
@@ -11,15 +13,19 @@ class ExpenseService:
         self.expense_dao = ExpenseDAO()
 
     def get_expenses_with_friend(self, user: User, friend_id: int) -> dict:
-        from services.friend import FriendService
-        from services.user import UserService
-
         friend = UserService().get_user_by_id(friend_id)
         if not FriendService().are_friends(user, friend):
             raise NotFriendsException()
 
         expenses = self.expense_dao.get_expenses_with_friend(user, friend_id)
         return {"friend_name": friend.name, "expenses": expenses}
+
+    def get_settle_up_amount(self, user: User, friend_id: int) -> list:
+        friend = UserService().get_user_by_id(friend_id)
+        if not FriendService().are_friends(user, friend):
+            raise NotFriendsException()
+
+        return self.expense_dao.get_settle_up_amount(user, friend_id)
 
     def get_activity(self, user: User) -> list:
         return self.expense_dao.get_activity(user)
