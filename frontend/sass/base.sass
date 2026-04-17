@@ -14,7 +14,8 @@
 
 .content-with-tabbar
     overflow-y: auto
-    height: 100%
+    // 84px (bottom bar) + 64 (tab bar button) = 148px
+    height: calc(100vh - 148px)
     > div.row:last-child
         margin-bottom: 80px
 
@@ -23,3 +24,6 @@
 
 footer
     background-color: white
+
+#scroll-sentinel
+    height: 10px
