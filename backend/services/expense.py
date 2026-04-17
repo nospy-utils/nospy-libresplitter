@@ -35,8 +35,8 @@ class ExpenseService:
 
         self.expense_dao.create_settle_up(user, friend, currency, value, reverse)
 
-    def get_activity(self, user: User) -> list:
-        return self.expense_dao.get_activity(user)
+    def get_activity(self, user: User, page: Page) -> dict:
+        return self.expense_dao.get_activity(user, page)
 
     def get_my_expenses(self, user: User) -> dict:
         totals_by_currency = self.expense_dao.get_totals_by_currency(user)

@@ -186,9 +186,20 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error recording settle up")
 
-    def get_activity(self, user: User) -> list:
+    def get_activity(self, user: User, page: Page) -> dict:
+        offset = (page.current_page - 1) * page.page_size
         try:
             with get_db() as conn:
+                total = conn.execute(
+                    """
+                    SELECT COUNT(*) AS cnt
+                    FROM expenses e
+                    INNER JOIN expense_user eu ON e.id = eu.expense_id
+                    WHERE eu.from_user_id = ? OR eu.to_user_id = ?
+                    """,
+                    (user.user_id, user.user_id),
+                ).fetchone()["cnt"]
+
                 rows = conn.execute(
                     """
                     SELECT
@@ -204,10 +215,18 @@ class ExpenseDAO(object):
                     INNER JOIN users uf ON eu.from_user_id = uf.id
                     WHERE eu.from_user_id = ? OR eu.to_user_id = ?
                     ORDER BY e.id DESC
+                    LIMIT ? OFFSET ?
                     """,
-                    (user.user_id, user.user_id, user.user_id),
+                    (user.user_id, user.user_id, user.user_id, page.page_size, offset),
                 ).fetchall()
-                return [dict(r) for r in rows]
+
+                return {
+                    "activity": [dict(r) for r in rows],
+                    "total": total,
+                    "page": page.current_page,
+                    "page_size": page.page_size,
+                    "has_next": (offset + page.page_size) < total,
+                }
         except sqlite3.OperationalError as e:
             logger.exception(e)
             raise ServiceUnavailableException("Service Unavailable")

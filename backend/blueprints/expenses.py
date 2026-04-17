@@ -62,7 +62,8 @@ def settle_up(user_id):
 @expenses_bp.get("/activity")
 @login_required
 def get_activity():
+    pagination = validate_pagination_request_params(request)
     user = get_session_user()
     service = ExpenseService()
-    data = service.get_activity(user)
+    data = service.get_activity(user, pagination)
     return jsonify(data), 200

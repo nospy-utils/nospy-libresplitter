@@ -37,12 +37,15 @@ class TestGetActivity:
         r = client.get(f"{PREFIX}/activity")
         assert r.status_code == 401
 
-    def test_empty_list_when_no_expenses(self, client):
+    def test_empty_activity_when_no_expenses(self, client):
         signup_and_signin(client)
 
         r = client.get(f"{PREFIX}/activity")
         assert r.status_code == 200
-        assert r.get_json() == []
+        data = r.get_json()
+        assert data["activity"] == []
+        assert data["total"] == 0
+        assert data["has_next"] is False
 
     def test_returns_expense_where_user_is_payer(self, client):
         signup_and_signin(client)
@@ -57,7 +60,7 @@ class TestGetActivity:
 
         r = client.get(f"{PREFIX}/activity")
         assert r.status_code == 200
-        data = r.get_json()
+        data = r.get_json()["activity"]
         assert len(data) == 1
         assert data[0]["from_user_name"] == "alice"
         assert data[0]["is_it_me"] == 1
@@ -79,7 +82,7 @@ class TestGetActivity:
         signin(client, email="alice@example.com")
         r = client.get(f"{PREFIX}/activity")
         assert r.status_code == 200
-        data = r.get_json()
+        data = r.get_json()["activity"]
         assert len(data) == 1
         assert data[0]["from_user_name"] == "bob"
         assert data[0]["is_it_me"] == 0
@@ -101,7 +104,7 @@ class TestGetActivity:
         signin(client, email="alice@example.com")
         r = client.get(f"{PREFIX}/activity")
         assert r.status_code == 200
-        assert r.get_json() == []
+        assert r.get_json()["activity"] == []
 
     def test_response_contains_required_fields(self, client):
         signup_and_signin(client)
@@ -115,7 +118,10 @@ class TestGetActivity:
         seed_expense(alice_id, bob_id)
 
         r = client.get(f"{PREFIX}/activity")
-        row = r.get_json()[0]
+        data = r.get_json()
+        for field in ("activity", "total", "page", "page_size", "has_next"):
+            assert field in data, f"missing top-level field: {field}"
+        row = data["activity"][0]
         for field in ("id", "from_user_name", "is_it_me", "description", "currency", "value", "created_at"):
             assert field in row, f"missing field: {field}"
 
@@ -132,7 +138,7 @@ class TestGetActivity:
         second_id = seed_expense(alice_id, bob_id, description="second", value=10.0)
 
         r = client.get(f"{PREFIX}/activity")
-        data = r.get_json()
+        data = r.get_json()["activity"]
         assert data[0]["id"] == second_id
         assert data[1]["id"] == first_id
 
@@ -156,8 +162,118 @@ class TestGetActivity:
 
         r = client.get(f"{PREFIX}/activity")
         assert r.status_code == 200
-        descriptions = {row["description"] for row in r.get_json()}
+        descriptions = {row["description"] for row in r.get_json()["activity"]}
         assert descriptions == {"with bob", "with carol"}
+
+
+# ---------------------------------------------------------------------------
+# GET /api/expenses/activity — pagination
+# ---------------------------------------------------------------------------
+
+class TestGetActivityPagination:
+    def _seed_n(self, alice_id, bob_id, n):
+        for i in range(n):
+            seed_expense(alice_id, bob_id, description=f"expense-{i}")
+
+    def test_default_pagination_metadata(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        seed_expense(alice_id, bob_id)
+
+        r = client.get(f"{PREFIX}/activity")
+        data = r.get_json()
+        assert data["page"] == 1
+        assert data["page_size"] == 20
+        assert data["total"] == 1
+        assert data["has_next"] is False
+
+    def test_custom_page_size(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        self._seed_n(alice_id, bob_id, 5)
+
+        r = client.get(f"{PREFIX}/activity?page_size=2")
+        data = r.get_json()
+        assert len(data["activity"]) == 2
+        assert data["page_size"] == 2
+        assert data["total"] == 5
+        assert data["has_next"] is True
+
+    def test_has_next_false_on_last_page(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        self._seed_n(alice_id, bob_id, 3)
+
+        r = client.get(f"{PREFIX}/activity?page=2&page_size=2")
+        data = r.get_json()
+        assert len(data["activity"]) == 1
+        assert data["has_next"] is False
+
+    def test_second_page_returns_correct_items(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        ids = [seed_expense(alice_id, bob_id, description=f"expense-{i}") for i in range(4)]
+        # newest first: ids[3], ids[2], ids[1], ids[0]
+        # page 1 (size 2): ids[3], ids[2]
+        # page 2 (size 2): ids[1], ids[0]
+
+        r = client.get(f"{PREFIX}/activity?page=2&page_size=2")
+        rows = r.get_json()["activity"]
+        assert len(rows) == 2
+        assert rows[0]["id"] == ids[1]
+        assert rows[1]["id"] == ids[0]
+
+    def test_page_beyond_total_returns_empty(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        seed_expense(alice_id, bob_id)
+
+        r = client.get(f"{PREFIX}/activity?page=999")
+        data = r.get_json()
+        assert data["activity"] == []
+        assert data["has_next"] is False
+
+    def test_invalid_page_param_returns_400(self, client):
+        signup_and_signin(client)
+
+        r = client.get(f"{PREFIX}/activity?page=abc")
+        assert r.status_code == 400
+
+    def test_invalid_page_size_param_returns_400(self, client):
+        signup_and_signin(client)
+
+        r = client.get(f"{PREFIX}/activity?page_size=xyz")
+        assert r.status_code == 400
 
 
 # ---------------------------------------------------------------------------
@@ -795,8 +911,8 @@ class TestPostSettleUp:
         self._settle(client, bob_id, currency="USD", value=20.0, reverse=False)
 
         r = client.get(f"{PREFIX}/activity")
-        data = r.get_json()
-        settle_rows = [row for row in data if row["description"] == "Settled up"]
+        rows = r.get_json()["activity"]
+        settle_rows = [row for row in rows if row["description"] == "Settled up"]
         assert len(settle_rows) == 1
         assert settle_rows[0]["is_it_me"] == 1
 
@@ -813,8 +929,8 @@ class TestPostSettleUp:
         self._settle(client, bob_id, currency="USD", value=20.0, reverse=True)
 
         r = client.get(f"{PREFIX}/activity")
-        data = r.get_json()
-        settle_rows = [row for row in data if row["description"] == "Settled up"]
+        rows = r.get_json()["activity"]
+        settle_rows = [row for row in rows if row["description"] == "Settled up"]
         assert len(settle_rows) == 1
         assert settle_rows[0]["is_it_me"] == 0
         assert settle_rows[0]["from_user_name"] == "bob"
@@ -852,7 +968,7 @@ class TestPostSettleUp:
         self._settle(client, bob_id, currency="EUR", value=55.0, reverse=False)
 
         r = client.get(f"{PREFIX}/activity")
-        data = r.get_json()
-        settle_rows = [row for row in data if row["description"] == "Settled up"]
+        rows = r.get_json()["activity"]
+        settle_rows = [row for row in rows if row["description"] == "Settled up"]
         assert len(settle_rows) == 1
         assert settle_rows[0]["value"] == 55.0
