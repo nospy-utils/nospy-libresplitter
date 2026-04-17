@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 
 from services import ExpenseService, login_required, get_session_user
 from services.exceptions import UserInputValidationException
+from utils.pagination import validate_pagination_request_params
 
 expenses_bp = Blueprint("expenses", __name__, url_prefix="/api/expenses")
 
@@ -18,9 +19,10 @@ def get_my_expenses():
 @expenses_bp.get("/friend/<int:friend_id>")
 @login_required
 def get_expenses_with_friend(friend_id):
+    pagination = validate_pagination_request_params(request)
     user = get_session_user()
     service = ExpenseService()
-    data = service.get_expenses_with_friend(user, friend_id)
+    data = service.get_expenses_with_friend(user, friend_id, pagination)
     return jsonify(data), 200
 
 

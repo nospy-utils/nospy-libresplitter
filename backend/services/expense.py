@@ -5,6 +5,7 @@ from models import User
 from services.exceptions import NotFriendsException
 from services.friend import FriendService
 from services.user import UserService
+from utils.pagination import Page
 
 
 class ExpenseService:
@@ -12,13 +13,13 @@ class ExpenseService:
     def __init__(self):
         self.expense_dao = ExpenseDAO()
 
-    def get_expenses_with_friend(self, user: User, friend_id: int) -> dict:
+    def get_expenses_with_friend(self, user: User, friend_id: int, page: Page) -> dict:
         friend = UserService().get_user_by_id(friend_id)
         if not FriendService().are_friends(user, friend):
             raise NotFriendsException()
 
-        expenses = self.expense_dao.get_expenses_with_friend(user, friend_id)
-        return {"friend_name": friend.name, "expenses": expenses}
+        result = self.expense_dao.get_expenses_with_friend(user, friend_id, page)
+        return {"friend_name": friend.name, **result}
 
     def get_settle_up_amount(self, user: User, friend_id: int) -> list:
         friend = UserService().get_user_by_id(friend_id)

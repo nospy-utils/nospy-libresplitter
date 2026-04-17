@@ -4,6 +4,7 @@ import logging
 from database import get_db
 from models import User
 from daos.exceptions import ServiceInternalException, ServiceUnavailableException
+from utils.pagination import Page
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -62,11 +63,27 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error fetching friend expense totals")
 
-    def get_expenses_with_friend(self, user: User, friend_id: int) -> list:
+    def get_expenses_with_friend(self, user: User, friend_id: int, page: Page) -> dict:
+        offset = (page.current_page - 1) * page.page_size
+        base_where = """
+            (eu.from_user_id = ? AND eu.to_user_id = ?) OR
+            (eu.from_user_id = ? AND eu.to_user_id = ?)
+        """
+        params = (user.user_id, friend_id, friend_id, user.user_id)
         try:
             with get_db() as conn:
+                total = conn.execute(
+                    f"""
+                    SELECT COUNT(*) AS cnt
+                    FROM expenses e
+                    INNER JOIN expense_user eu ON e.id = eu.expense_id
+                    WHERE {base_where}
+                    """,
+                    params,
+                ).fetchone()["cnt"]
+
                 rows = conn.execute(
-                    """
+                    f"""
                     SELECT
                       e.id,
                       CASE WHEN eu.from_user_id = ? THEN 'You' ELSE uf.name END AS from_user_name,
@@ -78,14 +95,20 @@ class ExpenseDAO(object):
                     FROM expenses e
                     INNER JOIN expense_user eu ON e.id = eu.expense_id
                     INNER JOIN users uf ON eu.from_user_id = uf.id
-                    WHERE
-                        (eu.from_user_id = ? AND eu.to_user_id = ?) OR
-                        (eu.from_user_id = ? AND eu.to_user_id = ?)
+                    WHERE {base_where}
                     ORDER BY e.id DESC
+                    LIMIT ? OFFSET ?
                     """,
-                    (user.user_id, user.user_id, friend_id, friend_id, user.user_id),
+                    (user.user_id, *params, page.page_size, offset),
                 ).fetchall()
-                return [dict(r) for r in rows]
+
+                return {
+                    "expenses": [dict(r) for r in rows],
+                    "total": total,
+                    "page": page.current_page,
+                    "page_size": page.page_size,
+                    "has_next": (offset + page.page_size) < total,
+                }
         except sqlite3.OperationalError as e:
             logger.exception(e)
             raise ServiceUnavailableException("Service Unavailable")
