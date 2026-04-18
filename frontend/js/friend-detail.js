@@ -12,9 +12,9 @@ function formatAmount(value) {
 
 function formatDate(dateStr) {
     const date = new Date(dateStr);
-    const month = date.toLocaleDateString(undefined, { month: 'short' });
+    const month = date.toLocaleDateString(undefined, {month: 'short'});
     const day = date.getDate();
-    return { month, day };
+    return {month, day};
 }
 
 function showError(message) {
@@ -30,38 +30,29 @@ function hideSpinner() {
     document.getElementById('loading-spinner').classList.remove('visible');
 }
 
-function renderSummary(friendName, expenses) {
+function renderSummary(data) {
     const nameEl = document.getElementById('friend-name');
     const summaryEl = document.getElementById('friend-summary');
 
     nameEl.textContent = friendName;
 
-    const netByCurrency = {};
-    for (const { from_user_name, currency, value } of expenses) {
-        if (!netByCurrency[currency]) netByCurrency[currency] = 0;
-        netByCurrency[currency] += from_user_name === 'You' ? value : -value;
-    }
-
-    let currencies = Object.entries(netByCurrency);
-    if (currencies.length === 0) {
+    if (data.totals_by_currency.length === 0) {
         summaryEl.textContent = 'You are settled up';
         return;
     }
 
-    // filter out currencies that have already been settled
-    currencies = currencies.filter(n => n[1] !== 0);
-
-    const parts = currencies.map(([currency, net]) => {
-        const cssClass = net >= 0 ? 'positive' : 'negative';
-        const label = net >= 0 ? `${friendName} owes you` : 'you owe';
-        return `${label} <span class="${cssClass}">${currency} ${formatAmount(Math.abs(net))}</span>`;
+    const parts = data.totals_by_currency.map((item) => {
+        const {currency, net_total} = item;
+        const cssClass = net_total >= 0 ? 'positive' : 'negative';
+        const label = net_total >= 0 ? `${friendName} owes you` : 'you owe';
+        return `${label} <span class="${cssClass}">${currency} ${formatAmount(Math.abs(net_total))}</span>`;
     });
 
     summaryEl.innerHTML = parts.join(' and ');
 }
 
-function buildExpenseRow({ from_user_name, description, currency, expense_total, value, created_at }) {
-    const { month, day } = formatDate(created_at);
+function buildExpenseRow({from_user_name, description, currency, expense_total, value, created_at}) {
+    const {month, day} = formatDate(created_at);
     const iPaid = from_user_name === 'You';
     const payerLabel = iPaid ? 'You paid' : `${friendName} paid`;
     const amountClass = iPaid ? 'positive' : 'negative';
@@ -132,7 +123,7 @@ async function loadNextPage() {
 
     if (!response.ok) {
         hideSpinner();
-        const { description } = await response.json();
+        const {description} = await response.json();
         showError(description);
         return;
     }
@@ -159,30 +150,30 @@ async function loadNextPage() {
     const expensesResp = await apiGet(`${API_EXPENSES_FRIEND}/${userId}?page=1&page_size=${PAGE_SIZE}`);
 
     if (!expensesResp.ok) {
-        const { description } = await expensesResp.json();
+        const {description} = await expensesResp.json();
         showError(description);
         return;
     }
 
-    const expensesData = await expensesResp.json();
-    friendName = expensesData.friend_name;
-    currentPage = expensesData.page;
-    hasNext = expensesData.has_next;
+    const data = await expensesResp.json();
+    friendName = data.friend_name;
+    currentPage = data.page;
+    hasNext = data.has_next;
 
-    renderSummary(friendName, expensesData.expenses);
+    renderSummary(data);
 
-    if (expensesData.total === 0) {
+    if (data.total === 0) {
         document.getElementById('expenses-list').innerHTML =
             '<div class="row py-2"><div class="col text-muted">No expenses yet.</div></div>';
     } else {
-        appendExpenses(expensesData.expenses);
+        appendExpenses(data.expenses);
     }
 
     if (hasNext) {
         const sentinel = document.getElementById('scroll-sentinel');
         scrollObserver = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting) loadNextPage();
-        }, { threshold: 0.1 });
+        }, {threshold: 0.1});
         scrollObserver.observe(sentinel);
     }
 })();

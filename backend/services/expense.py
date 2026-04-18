@@ -18,8 +18,9 @@ class ExpenseService:
         if not FriendService().are_friends(user, friend):
             raise NotFriendsException()
 
-        result = self.expense_dao.get_expenses_with_friend(user, friend_id, page)
-        return {"friend_name": friend.name, **result}
+        totals_by_currency = self.expense_dao.get_totals_by_friend(user, friend)
+        result = self.expense_dao.get_expenses_with_friend(user, friend, page)
+        return {"friend_name": friend.name, "totals_by_currency": totals_by_currency, **result}
 
     def get_settle_up_amount(self, user: User, friend_id: int) -> list:
         friend = UserService().get_user_by_id(friend_id)
@@ -40,7 +41,7 @@ class ExpenseService:
 
     def get_my_expenses(self, user: User) -> dict:
         totals_by_currency = self.expense_dao.get_totals_by_currency(user)
-        flat_by_friend = self.expense_dao.get_totals_by_friend(user)
+        flat_by_friend = self.expense_dao.get_totals_group_by_friend(user)
 
         totals_by_friend = self._group_by_friend(flat_by_friend)
 

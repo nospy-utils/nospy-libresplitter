@@ -35,7 +35,7 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error fetching expense totals")
 
-    def get_totals_by_friend(self, user: User) -> list:
+    def get_totals_group_by_friend(self, user: User) -> list:
         """Returns how much the user owes/is owed per friend per currency."""
         try:
             with get_db() as conn:
@@ -63,13 +63,37 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error fetching friend expense totals")
 
-    def get_expenses_with_friend(self, user: User, friend_id: int, page: Page) -> dict:
+    def get_totals_by_friend(self, user: User, friend: User) -> list:
+        """Returns how much the user owes/is owed per friend per currency."""
+        try:
+            with get_db() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT
+                      CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END AS friend_id,
+                      u.name AS friend_name,
+                      e.currency,
+                      SUM(CASE WHEN eu.from_user_id = ? THEN eu.value ELSE -eu.value END) AS net_total
+                    FROM expenses e
+                    INNER JOIN expense_user eu ON e.id = eu.expense_id
+                    INNER JOIN users u ON u.id = CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END
+                    WHERE eu.from_user_id = ? OR eu.to_user_id = ?
+                    GROUP BY friend_id, e.currency
+                    HAVING net_total != 0 and friend_id = ?;
+                    """,
+                    (user.user_id, user.user_id, user.user_id, user.user_id, user.user_id, friend.user_id),
+                ).fetchall()
+                return [dict(r) for r in rows]
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error fetching friend expense totals")
+
+    def get_expenses_with_friend(self, user: User, friend: User, page: Page) -> dict:
         offset = (page.current_page - 1) * page.page_size
-        base_where = """
-            (eu.from_user_id = ? AND eu.to_user_id = ?) OR
-            (eu.from_user_id = ? AND eu.to_user_id = ?)
-        """
-        params = (user.user_id, friend_id, friend_id, user.user_id)
+        params = (user.user_id, friend.user_id, friend.user_id, user.user_id)
         try:
             with get_db() as conn:
                 total = conn.execute(
@@ -77,7 +101,8 @@ class ExpenseDAO(object):
                     SELECT COUNT(*) AS cnt
                     FROM expenses e
                     INNER JOIN expense_user eu ON e.id = eu.expense_id
-                    WHERE {base_where}
+                    WHERE (eu.from_user_id = ? AND eu.to_user_id = ?) OR
+                          (eu.from_user_id = ? AND eu.to_user_id = ?)
                     """,
                     params,
                 ).fetchone()["cnt"]
@@ -95,7 +120,8 @@ class ExpenseDAO(object):
                     FROM expenses e
                     INNER JOIN expense_user eu ON e.id = eu.expense_id
                     INNER JOIN users uf ON eu.from_user_id = uf.id
-                    WHERE {base_where}
+                    WHERE (eu.from_user_id = ? AND eu.to_user_id = ?) OR
+                          (eu.from_user_id = ? AND eu.to_user_id = ?)
                     ORDER BY e.id DESC
                     LIMIT ? OFFSET ?
                     """,
