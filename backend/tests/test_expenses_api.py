@@ -647,6 +647,112 @@ class TestGetExpensesWithFriend:
 
 
 # ---------------------------------------------------------------------------
+# GET /api/expenses/friend/<friend_id> — totals_by_currency
+# ---------------------------------------------------------------------------
+
+class TestGetExpensesWithFriendTotalsByCurrency:
+    def _setup_alice_and_bob(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        return alice_id, bob_id
+
+    def test_totals_by_currency_present_in_response(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        assert "totals_by_currency" in r.get_json()
+
+    def test_totals_by_currency_empty_when_no_expenses(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.get_json()["totals_by_currency"] == []
+
+    def test_totals_by_currency_single_entry_when_alice_paid(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        seed_expense(alice_id, bob_id, currency="USD", value=30.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        totals = r.get_json()["totals_by_currency"]
+        assert len(totals) == 1
+        assert totals[0]["currency"] == "USD"
+        assert totals[0]["net_total"] == 30.0
+
+    def test_totals_by_currency_negative_when_friend_paid(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        seed_expense(bob_id, alice_id, currency="USD", value=20.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        totals = r.get_json()["totals_by_currency"]
+        assert len(totals) == 1
+        assert totals[0]["net_total"] == -20.0
+
+    def test_totals_by_currency_net_across_multiple_expenses(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        seed_expense(alice_id, bob_id, currency="USD", value=50.0)
+        seed_expense(bob_id, alice_id, currency="USD", value=20.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        totals = r.get_json()["totals_by_currency"]
+        assert len(totals) == 1
+        assert totals[0]["net_total"] == 30.0
+
+    def test_totals_by_currency_separate_entry_per_currency(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        seed_expense(alice_id, bob_id, currency="USD", value=10.0)
+        seed_expense(alice_id, bob_id, currency="EUR", value=5.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        totals = r.get_json()["totals_by_currency"]
+        assert len(totals) == 2
+        currencies = {t["currency"] for t in totals}
+        assert currencies == {"USD", "EUR"}
+
+    def test_totals_by_currency_entry_structure(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        seed_expense(alice_id, bob_id, currency="USD", value=10.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        entry = r.get_json()["totals_by_currency"][0]
+        for field in ("friend_id", "friend_name", "currency", "net_total"):
+            assert field in entry, f"missing field: {field}"
+
+    def test_totals_by_currency_zero_balance_excluded(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        seed_expense(alice_id, bob_id, currency="USD", value=20.0)
+        seed_expense(bob_id, alice_id, currency="USD", value=20.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        totals = r.get_json()["totals_by_currency"]
+        assert totals == []
+
+    def test_totals_by_currency_only_includes_this_friend(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        signup(client, name="carol", email="carol@example.com")
+
+        signin(client, email="carol@example.com")
+        carol_id = get_user_id(client, "carol@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "carol@example.com")
+        seed_expense(alice_id, bob_id, currency="USD", value=10.0)
+        seed_expense(alice_id, carol_id, currency="USD", value=99.0)
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        totals = r.get_json()["totals_by_currency"]
+        assert len(totals) == 1
+        assert totals[0]["net_total"] == 10.0
+
+
+# ---------------------------------------------------------------------------
 # GET /api/expenses/friend/<user_id>/settleup
 # ---------------------------------------------------------------------------
 
