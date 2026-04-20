@@ -15,7 +15,15 @@ const OUT_VENDOR_IMG_DIR = OUT_VENDOR_DIR + '/img';
 const OUT_VENDOR_CSS_DIR = OUT_VENDOR_DIR + '/css';
 
 async function clean() {
-    await fs.rmSync(OUT_DIR, {recursive: true, force: true});
+    await fs.readdir('./' + OUT_DIR, (err, files) => {
+        if (err) {
+            // first time running gulp
+            return;
+        }
+        files.forEach(file => {
+            fs.rmSync(`${OUT_DIR}/${file}`, {recursive: true, force: true});
+        });
+    });
 }
 
 function build_prep() {
