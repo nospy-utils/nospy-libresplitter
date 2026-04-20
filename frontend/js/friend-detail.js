@@ -140,12 +140,26 @@ async function loadNextPage() {
     }
 }
 
+async function updateAddExpenseForm() {
+    // context: when we have already selected the friend it makes no sense to go to step 1 of add expense
+    // so I prefer to go straight to step2 to shorten the process.
+    const form = document.getElementById("footerAddExpenseForm");
+    form.action = 'addexpense-step2.html';
+    const input = document.createElement("input"); // Create input element
+    input.type = "hidden";
+    input.name = "user_id";
+    input.value = userId;
+    form.appendChild(input);
+}
+
 (async () => {
     const params = new URLSearchParams(window.location.search);
     userId = params.get('user_id');
     if (!userId) return;
 
+    // update controls
     document.getElementById("friend-details-settle-user-id").value = userId;
+    updateAddExpenseForm();
 
     const expensesResp = await apiGet(`${API_EXPENSES_FRIEND}/${userId}?page=1&page_size=${PAGE_SIZE}`);
 
