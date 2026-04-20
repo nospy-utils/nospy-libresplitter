@@ -30,12 +30,7 @@
         <div class="col-sm-4 col-lg-2">
             With <strong>you</strong> and:
         </div>
-        <div class="col-sm-8 col-lg-10">
-            <div class="d-inline-block addexpense-step2-friend-wrapper">
-                <img class="d-inline" src="vendor/img/icons/person.svg" alt="placeholder"/>
-                <h3 class="d-inline">Tatiana Almeida</h3>
-            </div>
-        </div>
+        <div class="col-sm-8 col-lg-10" id="addexpense-step2-friend-list"></div>
     </div>
 
     <div class="row py-4">
@@ -51,7 +46,7 @@
                         <option value="BRL">BRL</option>
                     </select>
                     <span class="input-group-text">$</span>
-                    <input type="number" class="form-control" min="0.00" step="0.01" value="0.00"/>
+                    <input id="addexpense-step2-expense-value" type="number" class="form-control" min="0.00" step="0.01" value="0.00" inputmode="decimal"/>
                 </div>
                 <button type="button" id="paymentOptions" class="btn btn-warning" data-bs-toggle="modal"
                         data-bs-target="#paymentOptionsModal">Paid by you and split equally
@@ -107,70 +102,7 @@
                                         <strong>Split equally</strong>
                                         <small>Select which people owe an equal share</small>
                                     </div>
-                                    <div class="row py-2">
-                                        <div class="col-2">
-                                            <div class="addexpense-modal-friend-thumbnail">
-                                                <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-10 align-content-center">
-                                            <div class="addexpense-modal-list-name">
-                                                <h3>Tatiana Almeida</h3>
-                                            </div>
-                                            <div class="addexpense-modal-list-input">
-                                                <input class="form-check-input addexpense-radio-input" type="checkbox"
-                                                       checked>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2">
-                                        <div class="col-2">
-                                            <div class="addexpense-modal-friend-thumbnail">
-                                                <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-10 align-content-center">
-                                            <div class="addexpense-modal-list-name">
-                                                <h3>Tatiana Almeida</h3>
-                                            </div>
-                                            <div class="addexpense-modal-list-input">
-                                                <input class="form-check-input addexpense-radio-input" type="checkbox"
-                                                       checked>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2">
-                                        <div class="col-2">
-                                            <div class="addexpense-modal-friend-thumbnail">
-                                                <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-10 align-content-center">
-                                            <div class="addexpense-modal-list-name">
-                                                <h3>Tatiana Almeida</h3>
-                                            </div>
-                                            <div class="addexpense-modal-list-input">
-                                                <input class="form-check-input addexpense-radio-input" type="checkbox"
-                                                       checked>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2">
-                                        <div class="col-2">
-                                            <div class="addexpense-modal-friend-thumbnail">
-                                                <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-10 align-content-center">
-                                            <div class="addexpense-modal-list-name">
-                                                <h3>Tatiana Almeida</h3>
-                                            </div>
-                                            <div class="addexpense-modal-list-input">
-                                                <input class="form-check-input addexpense-radio-input" type="checkbox"
-                                                       checked>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <div id="addexpense-step2-modal-list-equal-share-list"></div>
                                 </div>
                             </div>
                             <div class="carousel-item">
@@ -179,22 +111,7 @@
                                         <strong>Split by exact amounts</strong>
                                         <small>Select exactly how much each person owes</small>
                                     </div>
-                                    <div class="row py-2">
-                                        <div class="col-2">
-                                            <div class="addexpense-modal-friend-thumbnail">
-                                                <img src="vendor/img/icons/person.svg" alt=""/>
-                                            </div>
-                                        </div>
-                                        <div class="col-4 align-content-center">
-                                            <h3 class="text-truncate">Tatiana Almeida</h3>
-                                        </div>
-                                        <div class="col-6 align-content-center">
-                                            <div class="mb-3 input-group">
-                                                <span class="input-group-text">$</span>
-                                                <input type="number" class="form-control" min="0.00" step="0.01" value="0.00"/>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <div id="addexpense-step2-modal-list-exact-amounts-list"></div>
                                 </div>
                             </div>
                             <div class="carousel-item">
@@ -203,22 +120,7 @@
                                         <strong>Split by percentages</strong>
                                         <small>Enter the percentage split that's fair for your situation</small>
                                     </div>
-                                    <div class="row py-2">
-                                        <div class="col-2">
-                                            <div class="addexpense-modal-friend-thumbnail">
-                                                <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-6 align-content-center">
-                                            <h3 class="text-truncate">Tatiana Almeida</h3>
-                                        </div>
-                                        <div class="col-4 align-content-center">
-                                            <div class="mb-3 input-group">
-                                                <input type="number" class="form-control" min="0" max="100" step="1" value="0"/>
-                                                <span class="input-group-text">%</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <div id="addexpense-step2-modal-list-percentage-list"></div>
                                 </div>
                             </div>
                         </div>
