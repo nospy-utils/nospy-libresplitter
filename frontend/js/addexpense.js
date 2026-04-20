@@ -70,6 +70,45 @@ function buildPercentageRow({name}) {
 
     const count = friends.length;
     const expenseInput = document.getElementById('addexpense-step2-expense-value');
+    const paymentOptionsBtn = document.getElementById('paymentOptions');
+
+    function updatePaymentOptionsBtn() {
+        paymentOptionsBtn.disabled = (parseFloat(expenseInput.value) || 0) <= 0;
+    }
+    updatePaymentOptionsBtn();
+    expenseInput.addEventListener('input', updatePaymentOptionsBtn);
+
+    const exactError = document.getElementById('addexpense-step2-exact-error');
+    const pctError   = document.getElementById('addexpense-step2-pct-error');
+    exactError.classList.add('d-none');
+    pctError.classList.add('d-none');
+
+    function getExactInputs() { return [...exactList.querySelectorAll('input[type="number"]')]; }
+    function getPctInputs()   { return [...pctList.querySelectorAll('input[type="number"]')]; }
+    function sum(inputs) { return inputs.reduce((acc, el) => acc + (parseFloat(el.value) || 0), 0); }
+
+    exactList.addEventListener('focusout', () => {
+        const total = parseFloat(expenseInput.value) || 0;
+        if (!total) return;
+        getExactInputs().forEach((input, i) => {
+            getPctInputs()[i].value = ((parseFloat(input.value) || 0) / total * 100).toFixed(2);
+        });
+        const diff = Math.abs(sum(getExactInputs()) - total);
+        exactError.textContent = `Amounts must add up to $${total.toFixed(2)}`;
+        exactError.classList.toggle('d-none', diff <= 0.01);
+    });
+
+    pctList.addEventListener('focusout', () => {
+        const total = parseFloat(expenseInput.value) || 0;
+        if (!total) return;
+        getPctInputs().forEach((input, i) => {
+            getExactInputs()[i].value = ((parseFloat(input.value) || 0) / 100 * total).toFixed(2);
+        });
+        const diff = Math.abs(sum(getPctInputs()) - 100);
+        pctError.textContent = 'Percentages must add up to 100%';
+        pctError.classList.toggle('d-none', diff <= 0.01);
+    });
+
     expenseInput.addEventListener('blur', () => {
         const total = parseFloat(expenseInput.value) || 0;
         const perPerson = Math.floor(total / count * 100) / 100;

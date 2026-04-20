@@ -35,7 +35,7 @@
 
     <div class="row py-4">
         <div class="col text-center">
-            <form>
+            <form id="addexpense-step2-expense-form">
                 <div class="mb-3 input-group">
                     <span class="input-group-text">Description</span>
                     <input type="text" class="form-control" placeholder="Enter a description">
@@ -49,7 +49,7 @@
                     <input id="addexpense-step2-expense-value" type="number" class="form-control" min="0.00" step="0.01" value="0.00" inputmode="decimal"/>
                 </div>
                 <button type="button" id="paymentOptions" class="btn btn-warning" data-bs-toggle="modal"
-                        data-bs-target="#paymentOptionsModal">Paid by you and split equally
+                        data-bs-target="#paymentOptionsModal">Payment options
                 </button>
             </form>
         </div>
@@ -93,6 +93,7 @@
                                         <strong>Split by exact amounts</strong>
                                         <small>Select exactly how much each person owes</small>
                                     </div>
+                                    <div id="addexpense-step2-exact-error" class="small alert alert-danger p-2"></div>
                                     <div id="addexpense-step2-modal-list-exact-amounts-list"></div>
                                 </div>
                             </div>
@@ -102,6 +103,7 @@
                                         <strong>Split by percentages</strong>
                                         <small>Enter the percentage split that's fair for your situation</small>
                                     </div>
+                                    <div id="addexpense-step2-pct-error" class="small alert alert-danger p-2"></div>
                                     <div id="addexpense-step2-modal-list-percentage-list"></div>
                                 </div>
                             </div>
