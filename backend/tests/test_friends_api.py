@@ -1,6 +1,21 @@
 from base import *
+from database import db as db_module
 
 PREFIX = "/api/friends"
+
+
+def seed_expense(from_user_id, to_user_id, description="lunch", currency="USD", value=10.0):
+    with db_module.get_db() as conn:
+        cur = conn.execute(
+            "INSERT INTO expenses (user_created, currency, value, description) VALUES (?, ?, ?, ?)",
+            (from_user_id, currency, value, description),
+        )
+        expense_id = cur.lastrowid
+        conn.execute(
+            "INSERT INTO expense_user (expense_id, from_user_id, to_user_id, value) VALUES (?, ?, ?, ?)",
+            (expense_id, from_user_id, to_user_id, value),
+        )
+        return expense_id
 
 # ---------------------------------------------------------------------------
 # POST /api/friends
@@ -69,66 +84,83 @@ class TestAddFriend:
 
 
 # ---------------------------------------------------------------------------
-# GET /api/friends
+# GET /api/friends/recent
 # ---------------------------------------------------------------------------
 
-class TestListFriends:
+class TestGetRecentFriends:
     def test_unauthenticated_returns_401(self, client):
-        r = client.get(PREFIX)
+        r = client.get(f"{PREFIX}/recent")
         assert r.status_code == 401
 
-    def test_empty_list_when_no_friends(self, client):
+    def test_empty_result_when_no_interactions(self, client):
         signup_and_signin(client)
-
-        r = client.get(PREFIX)
+        r = client.get(f"{PREFIX}/recent")
         assert r.status_code == 200
-        assert r.get_json()["friends"] == []
+        body = r.get_json()
+        assert body["friends"] == []
+        assert body["total"] == 0
 
-    def test_returns_added_friend(self, client):
+    def test_returns_friend_after_shared_expense(self, client):
         signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
         signup(client, name="bob", email="bob@example.com")
-        client.post(PREFIX, json={"email": "bob@example.com"})
-
-        r = client.get(PREFIX)
-        assert r.status_code == 200
-        friends = r.get_json()["friends"]
-        assert len(friends) == 1
-        assert friends[0]["email"] == "bob@example.com"
-        assert friends[0]["name"] == "bob"
-        assert "id" in friends[0]
-
-    def test_friend_sees_relationship_from_their_side(self, client):
-        """If alice adds bob, bob's friend list should also include alice."""
-        signup_and_signin(client, name="alice", email="alice@example.com")
-        signup(client, name="bob", email="bob@example.com")
-        client.post(PREFIX, json={"email": "bob@example.com"})
-
-        client.post(f"{USERS_PREFIX}/signout")
         signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+        signin(client, email="alice@example.com")
+        seed_expense(alice_id, bob_id)
 
-        r = client.get(PREFIX)
+        r = client.get(f"{PREFIX}/recent")
         assert r.status_code == 200
         friends = r.get_json()["friends"]
         assert len(friends) == 1
-        assert friends[0]["email"] == "alice@example.com"
+        assert friends[0]["id"] == bob_id
+        assert friends[0]["name"] == "bob"
 
-    def test_returns_multiple_friends(self, client):
+    def test_response_has_pagination_fields(self, client):
         signup_and_signin(client)
+        r = client.get(f"{PREFIX}/recent")
+        body = r.get_json()
+        for key in ("friends", "total", "page", "page_size", "has_next"):
+            assert key in body
+
+    def test_ordered_by_most_recent_interaction(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
         signup(client, name="bob", email="bob@example.com")
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
         signup(client, name="carol", email="carol@example.com")
-        client.post(PREFIX, json={"email": "bob@example.com"})
-        client.post(PREFIX, json={"email": "carol@example.com"})
+        signin(client, email="carol@example.com")
+        carol_id = get_user_id(client, "carol@example.com")
+        signin(client, email="alice@example.com")
 
-        r = client.get(PREFIX)
-        assert r.status_code == 200
-        emails = {f["email"] for f in r.get_json()["friends"]}
-        assert emails == {"bob@example.com", "carol@example.com"}
+        seed_expense(alice_id, carol_id, description="older")
+        seed_expense(alice_id, bob_id, description="newer")
 
-    def test_current_user_not_in_own_friend_list(self, client):
+        r = client.get(f"{PREFIX}/recent")
+        friends = r.get_json()["friends"]
+        assert friends[0]["id"] == bob_id
+        assert friends[1]["id"] == carol_id
+
+    def test_custom_page_size(self, client):
         signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
         signup(client, name="bob", email="bob@example.com")
-        client.post(PREFIX, json={"email": "bob@example.com"})
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+        signup(client, name="carol", email="carol@example.com")
+        signin(client, email="carol@example.com")
+        carol_id = get_user_id(client, "carol@example.com")
+        signin(client, email="alice@example.com")
+        seed_expense(alice_id, bob_id)
+        seed_expense(alice_id, carol_id)
 
-        r = client.get(PREFIX)
-        emails = [f["email"] for f in r.get_json()["friends"]]
-        assert "alice@example.com" not in emails
+        r = client.get(f"{PREFIX}/recent?page_size=1")
+        body = r.get_json()
+        assert len(body["friends"]) == 1
+        assert body["has_next"] is True
+
+    def test_invalid_page_param_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.get(f"{PREFIX}/recent?page=abc")
+        assert r.status_code == 400
