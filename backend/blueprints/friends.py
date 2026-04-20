@@ -16,6 +16,19 @@ def get_recent_friends():
     return jsonify(data), 200
 
 
+@friends_bp.get("/<int:user_id>")
+@login_required
+def get_friend(user_id: int):
+    current_user = get_session_user()
+    user_service = UserService()
+    friend_service = FriendService()
+
+    friend = user_service.get_user_by_id(user_id)
+    friend = friend_service.get_friend(current_user, friend)
+
+    return jsonify({"id": friend.user_id, "name": friend.name}), 200
+
+
 @friends_bp.post("")
 @login_required
 def add_friend():

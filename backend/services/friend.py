@@ -1,7 +1,7 @@
 from daos import FriendDAO
 from models import User
 from services.user import UserService
-from services.exceptions import UserInputValidationException
+from services.exceptions import UserInputValidationException, NotFriendsException
 from utils.pagination import Page
 
 
@@ -25,6 +25,11 @@ class FriendService:
 
     def get_recent_friends(self, user: User, page: Page) -> dict:
         return self.friend_dao.get_recent_friends(user, page)
+
+    def get_friend(self, current_user: User, friend: User) -> User:
+        if not self.friend_dao.are_friends(current_user, friend):
+            raise NotFriendsException()
+        return friend
 
     def are_friends(self, user: User, other_user: User) -> bool:
         return self.friend_dao.are_friends(user, other_user)

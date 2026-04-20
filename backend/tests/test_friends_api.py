@@ -164,3 +164,44 @@ class TestGetRecentFriends:
         signup_and_signin(client)
         r = client.get(f"{PREFIX}/recent?page=abc")
         assert r.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# GET /api/friends/<user_id>
+# ---------------------------------------------------------------------------
+
+class TestGetFriend:
+    def test_unauthenticated_returns_401(self, client):
+        r = client.get(f"{PREFIX}/1")
+        assert r.status_code == 401
+
+    def test_returns_friend_when_friends(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+        signin(client, email="bob@example.com")
+        bob_id = client.get(f"{USERS_PREFIX}/me").get_json()["user_id"]
+        signin(client, email="alice@example.com")
+
+        client.post(PREFIX, json={"email": "bob@example.com"})
+
+        r = client.get(f"{PREFIX}/{bob_id}")
+        assert r.status_code == 200
+        body = r.get_json()
+        assert body["id"] == bob_id
+        assert body["name"] == "bob"
+
+    def test_not_friends_returns_400(self, client):
+        signup_and_signin(client)
+        signup(client, name="bob", email="bob@example.com")
+        signin(client, email="bob@example.com")
+        bob_id = client.get(f"{USERS_PREFIX}/me").get_json()["user_id"]
+        signin(client, email="alice@example.com")
+
+        r = client.get(f"{PREFIX}/{bob_id}")
+        assert r.status_code == 400
+
+    def test_user_not_found_returns_404(self, client):
+        signup_and_signin(client)
+
+        r = client.get(f"{PREFIX}/99999")
+        assert r.status_code == 404
