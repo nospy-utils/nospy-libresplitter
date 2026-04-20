@@ -48,11 +48,13 @@ function buildPercentageRow({name}) {
     const userIds = params.getAll('user_id');
     if (!userIds.length) return;
 
-    const results = await Promise.all(
-        userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))
-    );
+    const [meResponse, ...results] = await Promise.all([
+        apiGet(API_USERS_ME),
+        ...userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))
+    ]);
 
-    const friends = [{id: currentUser?.user_id, name: 'You'}];
+    const me = await meResponse.json();
+    const friends = [{id: me.user_id, name: 'You'}];
     for (const response of results) {
         if (!response.ok) continue;
         friends.push(await response.json());
@@ -70,6 +72,21 @@ function buildPercentageRow({name}) {
 
     const count = friends.length;
     const expenseInput = document.getElementById('addexpense-step2-expense-value');
+    const expenseForm  = document.getElementById('addexpense-step2-expense-form');
+
+    for (const friend of friends) {
+        const hidden = document.createElement('input');
+        hidden.type  = 'hidden';
+        hidden.name  = `user_${friend.id}`;
+        hidden.value = '0.00';
+        expenseForm.appendChild(hidden);
+    }
+
+    function syncHiddenInputs() {
+        getExactInputs().forEach((input, i) => {
+            expenseForm.elements[`user_${friends[i].id}`].value = (parseFloat(input.value) || 0).toFixed(2);
+        });
+    }
     const paymentOptionsBtn = document.getElementById('paymentOptions');
 
     function updatePaymentOptionsBtn() {
@@ -80,8 +97,6 @@ function buildPercentageRow({name}) {
 
     const exactError = document.getElementById('addexpense-step2-exact-error');
     const pctError   = document.getElementById('addexpense-step2-pct-error');
-    exactError.classList.add('d-none');
-    pctError.classList.add('d-none');
 
     function getExactInputs() { return [...exactList.querySelectorAll('input[type="number"]')]; }
     function getPctInputs()   { return [...pctList.querySelectorAll('input[type="number"]')]; }
@@ -93,6 +108,7 @@ function buildPercentageRow({name}) {
         getExactInputs().forEach((input, i) => {
             getPctInputs()[i].value = ((parseFloat(input.value) || 0) / total * 100).toFixed(2);
         });
+        syncHiddenInputs();
         const diff = Math.abs(sum(getExactInputs()) - total);
         exactError.textContent = `Amounts must add up to $${total.toFixed(2)}`;
         exactError.classList.toggle('d-none', diff <= 0.01);
@@ -104,6 +120,7 @@ function buildPercentageRow({name}) {
         getPctInputs().forEach((input, i) => {
             getExactInputs()[i].value = ((parseFloat(input.value) || 0) / 100 * total).toFixed(2);
         });
+        syncHiddenInputs();
         const diff = Math.abs(sum(getPctInputs()) - 100);
         pctError.textContent = 'Percentages must add up to 100%';
         pctError.classList.toggle('d-none', diff <= 0.01);
@@ -125,5 +142,6 @@ function buildPercentageRow({name}) {
 
         exactInputs[0].value = (perPerson + parseFloat(exactRemainder)).toFixed(2);
         pctInputs[0].value = (perPersonPct + parseFloat(pctRemainder)).toFixed(2);
+        syncHiddenInputs();
     });
 })();
