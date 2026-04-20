@@ -5,22 +5,6 @@ function buildFriendChip({name}) {
 </div>`;
 }
 
-function buildEqualShareRow({name}) {
-    return `<div class="row py-2">
-    <div class="col-2">
-        <div class="addexpense-modal-friend-thumbnail">
-            <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-        </div>
-    </div>
-    <div class="col-10 align-content-center">
-        <div class="addexpense-modal-list-name"><h3>${name}</h3></div>
-        <div class="addexpense-modal-list-input">
-            <input class="form-check-input addexpense-radio-input" type="checkbox" checked>
-        </div>
-    </div>
-</div>`;
-}
-
 function buildExactAmountRow({name}) {
     return `<div class="row py-2">
     <div class="col-2">
@@ -68,26 +52,39 @@ function buildPercentageRow({name}) {
         userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))
     );
 
-    const friends = [];
+    const friends = [{id: currentUser?.user_id, name: 'You'}];
     for (const response of results) {
         if (!response.ok) continue;
         friends.push(await response.json());
     }
 
     const chipList = document.getElementById('addexpense-step2-friend-list');
-    const equalList = document.getElementById('addexpense-step2-modal-list-equal-share-list');
     const exactList = document.getElementById('addexpense-step2-modal-list-exact-amounts-list');
     const pctList = document.getElementById('addexpense-step2-modal-list-percentage-list');
 
-    const you = {id: currentUser?.user_id, name: 'You'};
-    equalList.insertAdjacentHTML('beforeend', buildEqualShareRow(you));
-    exactList.insertAdjacentHTML('beforeend', buildExactAmountRow(you));
-    pctList.insertAdjacentHTML('beforeend', buildPercentageRow(you));
-
     for (const friend of friends) {
         chipList.insertAdjacentHTML('beforeend', buildFriendChip(friend));
-        equalList.insertAdjacentHTML('beforeend', buildEqualShareRow(friend));
         exactList.insertAdjacentHTML('beforeend', buildExactAmountRow(friend));
         pctList.insertAdjacentHTML('beforeend', buildPercentageRow(friend));
     }
+
+    const count = friends.length;
+    const expenseInput = document.getElementById('addexpense-step2-expense-value');
+    expenseInput.addEventListener('blur', () => {
+        const total = parseFloat(expenseInput.value) || 0;
+        const perPerson = Math.floor(total / count * 100) / 100;
+        const perPersonPct = Math.floor(100 / count * 100) / 100;
+
+        const exactInputs = [...exactList.querySelectorAll('input[type="number"]')];
+        const pctInputs = [...pctList.querySelectorAll('input[type="number"]')];
+
+        exactInputs.forEach(input => { input.value = perPerson.toFixed(2); });
+        pctInputs.forEach(input => { input.value = perPersonPct.toFixed(2); });
+
+        const exactRemainder = (total - perPerson * count).toFixed(2);
+        const pctRemainder = (100 - perPersonPct * count).toFixed(2);
+
+        exactInputs[0].value = (perPerson + parseFloat(exactRemainder)).toFixed(2);
+        pctInputs[0].value = (perPersonPct + parseFloat(pctRemainder)).toFixed(2);
+    });
 })();
