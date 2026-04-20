@@ -20,9 +20,9 @@
             <div class="d-flex">
                 <span class="fs-4">Add expense</span>
             </div>
-            <form class="d-flex" action="addexpense-step2.html">
-                <button id="save-btn" class="btn btn-primary w-100" type="submit">Save</button>
-            </form>
+            <div class="d-flex">
+                <button id="save-btn" class="btn btn-primary w-100" type="button">Save</button>
+            </div>
         </div>
     </nav>
 
@@ -32,19 +32,16 @@
                 <small>Recent</small>
             </div>
         </div>
-        <div class="row py-2">
-            <div class="col-sm-2 col-lg-1 d-none d-sm-block">
-                <div class="addexpense-step1-friend-thumbnail">
-                    <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-                </div>
-            </div>
-            <div class="col-sm-10 col-lg-11 align-content-center">
-                <div class="addexpense-step1-list-name">
-                    <h3>Tatiana Almeida</h3>
-                </div>
-                <div class="addexpense-step1-list-input">
-                    <input class="form-check-input addexpense-radio-input" type="checkbox" checked>
-                </div>
+
+        <div id="error-banner" class="error-banner alert alert-danger mt-3">
+            <span id="error-message"></span>
+        </div>
+
+        <div id="friends-list"></div>
+        <div id="scroll-sentinel"></div>
+        <div id="loading-spinner" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
         </div>
     </div>
@@ -56,5 +53,6 @@
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/signout.js"></script>
+<script src="js/addexpense-step1.js"></script>
 </body>
 </html>

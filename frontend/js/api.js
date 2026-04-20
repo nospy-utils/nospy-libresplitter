@@ -4,6 +4,7 @@ const API_USERS_ME = API_BASE + '/api/users/me';
 const API_USERS_SIGNIN = API_BASE + '/api/users/signin';
 const API_USERS_SIGNOUT = API_BASE + '/api/users/signout';
 const API_FRIENDS = API_BASE + '/api/friends';
+const API_FRIENDS_RECENT = API_BASE + '/api/friends/recent';
 const API_EXPENSES_ME = API_BASE + '/api/expenses/me';
 const API_EXPENSES_FRIEND = API_BASE + '/api/expenses/friend';
 const API_EXPENSES_ACTIVITY = API_BASE + '/api/expenses/activity';
