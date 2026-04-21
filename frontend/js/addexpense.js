@@ -11,47 +11,47 @@ const paymentOptionsBtn = document.getElementById('paymentOptions');
 
 function buildFriendChip({name}) {
     return `<div class="d-inline-block addexpense-step2-friend-wrapper">
-    <img class="d-inline" src="vendor/img/icons/person.svg" alt="placeholder"/>
-    <h3 class="d-inline">${name}</h3>
-</div>`;
+                <img class="d-inline" src="vendor/img/icons/person.svg" alt="placeholder"/>
+                <h3 class="d-inline">${name}</h3>
+            </div>`;
 }
 
 function buildExactAmountRow({name}) {
     return `<div class="row py-2">
-    <div class="col-2">
-        <div class="addexpense-modal-friend-thumbnail">
-            <img src="vendor/img/icons/person.svg" alt=""/>
-        </div>
-    </div>
-    <div class="col-4 align-content-center">
-        <h3 class="text-truncate">${name}</h3>
-    </div>
-    <div class="col-6 align-content-center">
-        <div class="mb-3 input-group">
-            <span class="input-group-text">$</span>
-            <input type="number" class="form-control" min="0.00" step="0.01" value="0.00" inputmode="decimal"/>
-        </div>
-    </div>
-</div>`;
+                <div class="col-2">
+                    <div class="addexpense-modal-friend-thumbnail">
+                        <img src="vendor/img/icons/person.svg" alt=""/>
+                    </div>
+                </div>
+                <div class="col-4 align-content-center">
+                    <h3 class="text-truncate">${name}</h3>
+                </div>
+                <div class="col-6 align-content-center">
+                    <div class="mb-3 input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" min="0.00" step="0.01" value="0.00" inputmode="decimal"/>
+                    </div>
+                </div>
+            </div>`;
 }
 
 function buildPercentageRow({name}) {
     return `<div class="row py-2">
-    <div class="col-2">
-        <div class="addexpense-modal-friend-thumbnail">
-            <img src="vendor/img/icons/person.svg" alt="placeholder"/>
-        </div>
-    </div>
-    <div class="col-6 align-content-center">
-        <h3 class="text-truncate">${name}</h3>
-    </div>
-    <div class="col-4 align-content-center">
-        <div class="mb-3 input-group">
-            <input type="number" class="form-control" min="0" max="100" step="1" value="0" inputmode="decimal"/>
-            <span class="input-group-text">%</span>
-        </div>
-    </div>
-</div>`;
+                <div class="col-2">
+                    <div class="addexpense-modal-friend-thumbnail">
+                        <img src="vendor/img/icons/person.svg" alt="placeholder"/>
+                    </div>
+                </div>
+                <div class="col-6 align-content-center">
+                    <h3 class="text-truncate">${name}</h3>
+                </div>
+                <div class="col-4 align-content-center">
+                    <div class="mb-3 input-group">
+                        <input type="number" class="form-control" min="0" max="100" step="1" value="0" inputmode="decimal"/>
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+            </div>`;
 }
 
 // helper functions
@@ -79,10 +79,7 @@ function getPctInputs() {
 
 // meaningful functions
 async function fetchDataFromUpstream(userIds) {
-    const [meResponse, ...results] = await Promise.all([
-        apiGet(API_USERS_ME),
-        ...userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))
-    ]);
+    const [meResponse, ...results] = await Promise.all([apiGet(API_USERS_ME), ...userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))]);
 
     const me = await meResponse.json();
     friends = [{id: me.user_id, name: 'You'}];
@@ -108,8 +105,7 @@ async function createDynamicElements() {
     }
 }
 
-async function addEventListenerForUI(){
-    updatePaymentOptionsBtn();
+async function addEventListenerForUI() {
     expenseInput.addEventListener('input', updatePaymentOptionsBtn);
 
     exactList.addEventListener('focusout', () => {
