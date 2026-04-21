@@ -12,6 +12,28 @@ logger = logging.getLogger(__name__)
 
 class ExpenseDAO(object):
 
+    def create_expense(self, user: User, description: str, currency: str, value: float, participants: list) -> None:
+        try:
+            with get_db() as conn:
+                cursor = conn.execute(
+                    "INSERT INTO expenses (user_created, currency, value, description) VALUES (?, ?, ?, ?)",
+                    (user.user_id, currency, value, description),
+                )
+                expense_id = cursor.lastrowid
+                for p in participants:
+                    if p["user_id"] == user.user_id:
+                        continue
+                    conn.execute(
+                        "INSERT INTO expense_user (expense_id, from_user_id, to_user_id, value) VALUES (?, ?, ?, ?)",
+                        (expense_id, user.user_id, p["user_id"], p["share"]),
+                    )
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error creating expense")
+
     def get_totals_by_currency(self, user: User) -> list:
         try:
             with get_db() as conn:

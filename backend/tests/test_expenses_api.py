@@ -9,6 +9,17 @@ def add_friend(client, email):
     return client.post(FRIENDS_PREFIX, json={"email": email})
 
 
+def create_expense(client, description="Dinner", currency="NZD", value=10.0, participants=None):
+    if participants is None:
+        participants = []
+    return client.post(PREFIX, json={
+        "description": description,
+        "currency": currency,
+        "value": value,
+        "participants": participants,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -1078,3 +1089,214 @@ class TestPostSettleUp:
         settle_rows = [row for row in rows if row["description"] == "Settled up"]
         assert len(settle_rows) == 1
         assert settle_rows[0]["value"] == 55.0
+
+
+# ---------------------------------------------------------------------------
+# POST /api/expenses
+# ---------------------------------------------------------------------------
+
+class TestCreateExpense:
+    def _setup_alice_and_bob(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        return alice_id, bob_id
+
+    def _setup_alice_bob_carol(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+        signup(client, name="carol", email="carol@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="carol@example.com")
+        carol_id = get_user_id(client, "carol@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        add_friend(client, "carol@example.com")
+        return alice_id, bob_id, carol_id
+
+    # --- authentication ---
+
+    def test_unauthenticated_returns_401(self, client):
+        r = client.post(PREFIX, json={})
+        assert r.status_code == 401
+
+    # --- input validation (blueprint) ---
+
+    def test_missing_description_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"currency": "NZD", "value": 10.0, "participants": []})
+        assert r.status_code == 400
+
+    def test_non_string_description_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"description": 123, "currency": "NZD", "value": 10.0, "participants": []})
+        assert r.status_code == 400
+
+    def test_missing_currency_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"description": "Dinner", "value": 10.0, "participants": []})
+        assert r.status_code == 400
+
+    def test_non_string_currency_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"description": "Dinner", "currency": 42, "value": 10.0, "participants": []})
+        assert r.status_code == 400
+
+    def test_missing_value_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"description": "Dinner", "currency": "NZD", "participants": []})
+        assert r.status_code == 400
+
+    def test_non_positive_value_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"description": "Dinner", "currency": "NZD", "value": 0, "participants": []})
+        assert r.status_code == 400
+
+    def test_missing_participants_returns_400(self, client):
+        signup_and_signin(client)
+        r = client.post(PREFIX, json={"description": "Dinner", "currency": "NZD", "value": 10.0})
+        assert r.status_code == 400
+
+    def test_empty_participants_returns_400(self, client):
+        signup_and_signin(client)
+        r = create_expense(client, participants=[])
+        assert r.status_code == 400
+
+    def test_participant_missing_user_id_returns_400(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        r = create_expense(client, participants=[{"share": 10.0}])
+        assert r.status_code == 400
+
+    def test_participant_missing_share_returns_400(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        r = create_expense(client, participants=[{"user_id": alice_id}])
+        assert r.status_code == 400
+
+    def test_participant_non_positive_share_returns_400(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        r = create_expense(client, participants=[{"user_id": alice_id, "share": 0}])
+        assert r.status_code == 400
+
+    # --- business rule validation (service) ---
+
+    def test_current_user_not_in_participants_returns_400(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        r = create_expense(client, value=10.0, participants=[{"user_id": bob_id, "share": 10.0}])
+        assert r.status_code == 400
+
+    def test_shares_not_summing_to_value_returns_400(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        r = create_expense(client, value=10.0, participants=[
+            {"user_id": alice_id, "share": 4.0},
+            {"user_id": bob_id, "share": 4.0},
+        ])
+        assert r.status_code == 400
+
+    def test_participant_not_a_friend_returns_400(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        # No add_friend call — they are not friends
+        r = create_expense(client, value=10.0, participants=[
+            {"user_id": alice_id, "share": 5.0},
+            {"user_id": bob_id, "share": 5.0},
+        ])
+        assert r.status_code == 400
+
+    def test_nonexistent_participant_returns_404(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        r = create_expense(client, value=10.0, participants=[
+            {"user_id": alice_id, "share": 5.0},
+            {"user_id": 9999, "share": 5.0},
+        ])
+        assert r.status_code == 404
+
+    # --- success cases ---
+
+    def test_success_returns_201(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        r = create_expense(client, value=10.0, participants=[
+            {"user_id": alice_id, "share": 5.0},
+            {"user_id": bob_id, "share": 5.0},
+        ])
+        assert r.status_code == 201
+
+    def test_expense_appears_in_activity(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        create_expense(client, description="Pizza", currency="NZD", value=10.0, participants=[
+            {"user_id": alice_id, "share": 5.0},
+            {"user_id": bob_id, "share": 5.0},
+        ])
+
+        r = client.get(f"{PREFIX}/activity")
+        assert r.status_code == 200
+        descriptions = [row["description"] for row in r.get_json()["activity"]]
+        assert "Pizza" in descriptions
+
+    def test_expense_appears_in_expenses_with_friend(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        create_expense(client, description="Groceries", currency="NZD", value=20.0, participants=[
+            {"user_id": alice_id, "share": 10.0},
+            {"user_id": bob_id, "share": 10.0},
+        ])
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert r.status_code == 200
+        descriptions = [row["description"] for row in r.get_json()["expenses"]]
+        assert "Groceries" in descriptions
+
+    def test_three_participants_success(self, client):
+        alice_id, bob_id, carol_id = self._setup_alice_bob_carol(client)
+        r = create_expense(client, value=9.0, participants=[
+            {"user_id": alice_id, "share": 3.0},
+            {"user_id": bob_id, "share": 3.0},
+            {"user_id": carol_id, "share": 3.0},
+        ])
+        assert r.status_code == 201
+
+    def test_three_participants_both_friends_appear_in_activity(self, client):
+        alice_id, bob_id, carol_id = self._setup_alice_bob_carol(client)
+        create_expense(client, description="Dinner", value=9.0, participants=[
+            {"user_id": alice_id, "share": 3.0},
+            {"user_id": bob_id, "share": 3.0},
+            {"user_id": carol_id, "share": 3.0},
+        ])
+
+        r = client.get(f"{PREFIX}/activity")
+        rows = r.get_json()["activity"]
+        dinner_rows = [row for row in rows if row["description"] == "Dinner"]
+        # Two expense_user rows: alice→bob and alice→carol
+        assert len(dinner_rows) == 2
+
+    def test_friend_share_reflected_in_balance(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        create_expense(client, currency="NZD", value=10.0, participants=[
+            {"user_id": alice_id, "share": 6.0},
+            {"user_id": bob_id, "share": 4.0},
+        ])
+
+        r = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert r.status_code == 200
+        data = r.get_json()
+        nzd = next(row for row in data if row["currency"] == "NZD")
+        assert nzd["net_total"] == 4.0

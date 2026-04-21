@@ -59,6 +59,38 @@ def settle_up(user_id):
     return jsonify({"message": "Settled up successfully."}), 201
 
 
+@expenses_bp.post("")
+@login_required
+def create_expense():
+    data = request.get_json(silent=True) or {}
+    description = data.get("description")
+    currency = data.get("currency")
+    value = data.get("value")
+    participants = data.get("participants")
+
+    if not description or not isinstance(description, str):
+        raise UserInputValidationException("description is required.")
+    if not currency or not isinstance(currency, str):
+        raise UserInputValidationException("currency is required.")
+    if value is None:
+        raise UserInputValidationException("value is required.")
+    if not isinstance(value, (int, float)) or value <= 0:
+        raise UserInputValidationException("value must be a positive number.")
+    if not isinstance(participants, list) or len(participants) == 0:
+        raise UserInputValidationException("participants must be a non-empty list.")
+    for p in participants:
+        if not isinstance(p, dict) or "user_id" not in p or "share" not in p:
+            raise UserInputValidationException("Each participant must have user_id and share.")
+        if not isinstance(p["share"], (int, float)) or p["share"] <= 0:
+            raise UserInputValidationException("Each participant share must be a positive number.")
+
+    user = get_session_user()
+    service = ExpenseService()
+    service.create_expense(user, description, currency, value, participants)
+
+    return jsonify({"message": "Expense created successfully."}), 201
+
+
 @expenses_bp.get("/activity")
 @login_required
 def get_activity():
