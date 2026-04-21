@@ -1,4 +1,5 @@
 // flow variable
+let userIds = [];
 let friends = [];
 
 // components
@@ -7,6 +8,9 @@ const chipList = document.getElementById('addexpense-step2-friend-list');
 const exactList = document.getElementById('addexpense-step2-modal-list-exact-amounts-list');
 const pctList = document.getElementById('addexpense-step2-modal-list-percentage-list');
 const expenseForm = document.getElementById('addexpense-step2-expense-form');
+const saveForm = document.getElementById('addexpense-step2-save-form');
+const descriptionInput = document.getElementById('addexpense-step2-description');
+const currencySelect = document.getElementById('addexpense-step2-currency');
 const paymentOptionsBtn = document.getElementById('paymentOptions');
 
 function buildFriendChip({name}) {
@@ -77,9 +81,17 @@ function getPctInputs() {
     return [...pctList.querySelectorAll('input[type="number"]')];
 }
 
+function showError(message) {
+    document.getElementById('error-message').textContent = message;
+    document.getElementById('error-banner').classList.add('visible');
+}
+
 // meaningful functions
-async function fetchDataFromUpstream(userIds) {
-    const [meResponse, ...results] = await Promise.all([apiGet(API_USERS_ME), ...userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))]);
+async function fetchDataFromUpstream() {
+    const [meResponse, ...results] = await Promise.all([
+        apiGet(API_USERS_ME),
+        ...userIds.map(id => apiGet(`${API_FRIENDS}/${id}`))
+    ]);
 
     const me = await meResponse.json();
     friends = [{id: me.user_id, name: 'You'}];
@@ -105,7 +117,47 @@ async function createDynamicElements() {
     }
 }
 
+async function saveExpense() {
+    const description = descriptionInput.value.trim();
+    const currency = currencySelect.value;
+    const value = parseFloat(expenseInput.value) || 0;
+
+    if (!description) {
+        showError('Please enter a description.')
+        return;
+    }
+    if (value <= 0) {
+        showError('Please enter a valid expense amount.')
+        return;
+    }
+
+    const participants = friends.map(friend => ({
+        user_id: friend.id,
+        share: parseFloat(expenseForm.elements[`user_${friend.id}`].value) || 0,
+    }));
+
+    const response = await apiPost(API_EXPENSES, JSON.stringify({description, currency, value, participants}));
+
+    if (!response.ok) {
+        const body = await response.json();
+        const errorMessage = `${body.name} - ${body.description}`;
+        showError(errorMessage);
+        return;
+    }
+
+    if (userIds.length > 1) {
+        window.location.href = 'friends.html';
+    } else {
+        window.location.href = `friend-detail.html?user_id=${userIds[0]}`;
+    }
+}
+
 async function addEventListenerForUI() {
+    saveForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveExpense();
+    });
+
     expenseInput.addEventListener('input', updatePaymentOptionsBtn);
 
     exactList.addEventListener('focusout', () => {
@@ -164,10 +216,10 @@ async function addEventListenerForUI() {
 
 (async () => {
     const params = new URLSearchParams(window.location.search);
-    const userIds = params.getAll('user_id');
+    userIds = params.getAll('user_id');
     if (!userIds.length) return;
 
-    await fetchDataFromUpstream(userIds);
+    await fetchDataFromUpstream();
     await createDynamicElements();
     await addEventListenerForUI();
 })();

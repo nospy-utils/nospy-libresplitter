@@ -19,7 +19,7 @@
             <div class="d-flex">
                 <span class="fs-4">Add expense</span>
             </div>
-            <form class="d-flex">
+            <form id="addexpense-step2-save-form" class="d-flex">
                 <button id="save-btn" class="btn btn-primary w-100" type="submit">Save</button>
             </form>
         </div>
@@ -32,15 +32,22 @@
         <div class="col-sm-8 col-lg-10" id="addexpense-step2-friend-list"></div>
     </div>
 
-    <div class="row py-4">
+    <div class="row">
+        <div class="col">
+            <div id="error-banner" class="error-banner alert alert-danger">
+                <span id="error-message">Test</span>
+            </div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col text-center">
             <form id="addexpense-step2-expense-form">
                 <div class="mb-3 input-group">
                     <span class="input-group-text">Description</span>
-                    <input type="text" class="form-control" placeholder="Enter a description">
+                    <input type="text" class="form-control" id="addexpense-step2-description" placeholder="Enter a description">
                 </div>
                 <div class="mb-3 input-group">
-                    <select class="form-select" id="inputGroupSelect04">
+                    <select class="form-select" id="addexpense-step2-currency">
                         <option value="NZD" selected>NZD</option>
                         <option value="BRL">BRL</option>
                     </select>
