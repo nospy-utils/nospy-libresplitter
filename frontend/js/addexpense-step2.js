@@ -12,6 +12,8 @@ const saveForm = document.getElementById('addexpense-step2-save-form');
 const descriptionInput = document.getElementById('addexpense-step2-description');
 const currencySelect = document.getElementById('addexpense-step2-currency');
 const paymentOptionsBtn = document.getElementById('paymentOptions');
+const modalCancelBtn1 = document.getElementById('addexpense-step2-modal-btn-cancel-1');
+const modalCancelBtn2 = document.getElementById('addexpense-step2-modal-btn-cancel-2');
 
 function buildFriendChip({name}) {
     return `<div class="d-inline-block addexpense-step2-friend-wrapper">
@@ -159,6 +161,10 @@ async function addEventListenerForUI() {
     });
 
     expenseInput.addEventListener('input', updatePaymentOptionsBtn);
+
+    const resetSplits = () => expenseInput.dispatchEvent(new Event('blur'));
+    modalCancelBtn1.addEventListener('click', resetSplits);
+    modalCancelBtn2.addEventListener('click', resetSplits);
 
     exactList.addEventListener('focusout', () => {
         const total = parseFloat(expenseInput.value) || 0;
