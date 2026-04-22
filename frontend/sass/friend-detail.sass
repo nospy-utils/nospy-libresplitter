@@ -1,5 +1,8 @@
 @import "base"
 
+#expenses-list
+  color: #525252
+
 .error-banner
   display: none
   &.visible
@@ -10,11 +13,17 @@
   &.visible
     display: block
 
-.expense-thumbnail
-  background-color: #e8e8e8
+.expense-bin
   text-align: center
-  padding: 10px 0 10px 0
-  > img
-    max-width: 45px
-    width: 80%
-    height: auto
+  padding: 10px
+  cursor: pointer
+
+  svg
+    fill: #ff0000
+    width: 40px
+
+    &:hover
+    fill: #525252
+
+    &:active
+    fill: #525252
