@@ -281,3 +281,45 @@ class ExpenseDAO(object):
         except sqlite3.DatabaseError as e:
             logger.exception(e)
             raise ServiceInternalException("Error fetching activity")
+
+    def delete_expense(self, expense_id: int) -> None:
+        """Delete an expense and all its associated expense_user records."""
+        try:
+            with get_db() as conn:
+                # Delete associated expense_user records first (due to foreign key constraints)
+                conn.execute(
+                    "DELETE FROM expense_user WHERE expense_id = ?",
+                    (expense_id,),
+                )
+                
+                # Delete the expense record
+                conn.execute(
+                    "DELETE FROM expenses WHERE id = ?",
+                    (expense_id,),
+                )
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error deleting expense")
+
+    def get_expense_owner(self, expense_id: int) -> int:
+        """Get the user ID of who created the expense.
+        
+        Returns the user_created ID, or None if expense doesn't exist.
+        """
+        try:
+            with get_db() as conn:
+                result = conn.execute(
+                    "SELECT user_created FROM expenses WHERE id = ?",
+                    (expense_id,),
+                ).fetchone()
+                
+                return result["user_created"] if result else None
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error fetching expense owner")

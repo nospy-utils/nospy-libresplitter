@@ -46,3 +46,11 @@ class NotFriendsException(HTTPException):
 
     def __init__(self, description: str = "You are not friends with this user."):
         super().__init__(description)
+
+# TODO Maybe I don't want to be as explicit about this one
+class ExpenseNotFoundException(HTTPException):
+
+    code = 404
+
+    def __init__(self, description: str = "Expense not found."):
+        super().__init__(description)

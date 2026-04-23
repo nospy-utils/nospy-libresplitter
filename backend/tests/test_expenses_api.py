@@ -1300,3 +1300,158 @@ class TestCreateExpense:
         data = r.get_json()
         nzd = next(row for row in data if row["currency"] == "NZD")
         assert nzd["net_total"] == 4.0
+
+
+class TestDeleteExpense:
+    def _setup_alice_and_bob(self, client):
+        signup_and_signin(client)
+        alice_id = get_user_id(client, "alice@example.com")
+        signup(client, name="bob", email="bob@example.com")
+
+        signin(client, email="bob@example.com")
+        bob_id = get_user_id(client, "bob@example.com")
+
+        signin(client, email="alice@example.com")
+        add_friend(client, "bob@example.com")
+        return alice_id, bob_id
+
+    def _create_expense_and_get_id(self, client, alice_id, bob_id):
+        """Create an expense and return its ID by checking the activity."""
+        create_expense(client, "Test expense", "USD", 20.0, [
+            {"user_id": alice_id, "share": 10.0},
+            {"user_id": bob_id, "share": 10.0}
+        ])
+        
+        # Get the expense ID from activity
+        response = client.get(f"{PREFIX}/activity")
+        return response.json["activity"][0]["id"]
+
+    def test_unauthenticated_returns_401(self, client):
+        client.post("/api/users/logout")
+        response = client.delete(f"{PREFIX}/123")
+        assert response.status_code == 401
+
+    def test_nonexistent_expense_returns_404(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        response = client.delete(f"{PREFIX}/99999")
+        assert response.status_code == 404
+
+    def test_expense_not_owned_by_user_returns_404(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        # Log in as Bob (who didn't create the expense)
+        signin(client, email="bob@example.com")
+
+        response = client.delete(f"{PREFIX}/{expense_id}")
+        assert response.status_code == 404
+
+    def test_successful_deletion_returns_200(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        response = client.delete(f"{PREFIX}/{expense_id}")
+        assert response.status_code == 200
+        assert response.json["message"] == "Expense deleted successfully."
+
+    def test_deleted_expense_removed_from_activity(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        # Verify expense exists in activity
+        response = client.get(f"{PREFIX}/activity")
+        assert response.json["total"] == 1
+
+        # Delete the expense
+        client.delete(f"{PREFIX}/{expense_id}")
+
+        # Verify expense is removed from activity
+        response = client.get(f"{PREFIX}/activity")
+        assert response.json["total"] == 0
+        assert len(response.json["activity"]) == 0
+
+    def test_deleted_expense_removed_from_expenses_with_friend(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        # Verify expense exists in expenses with friend
+        response = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert response.json["total"] == 1
+
+        # Delete the expense
+        client.delete(f"{PREFIX}/{expense_id}")
+
+        # Verify expense is removed from expenses with friend
+        response = client.get(f"{PREFIX}/friend/{bob_id}")
+        assert response.json["total"] == 0
+        assert len(response.json["expenses"]) == 0
+
+    def test_deleted_expense_updates_balances(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        # Verify initial balance
+        response = client.get(f"{PREFIX}/me")
+        assert len(response.json["totals_by_friend"]) == 1
+        assert response.json["totals_by_friend"][0]["currencies"][0]["net_total"] == 10.0
+
+        # Delete the expense
+        client.delete(f"{PREFIX}/{expense_id}")
+
+        # Verify balance is updated (should be empty now)
+        response = client.get(f"{PREFIX}/me")
+        assert len(response.json["totals_by_friend"]) == 0
+
+    def test_deleted_expense_updates_settle_up_amount(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        # Verify initial settle up amount
+        response = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert len(response.json) == 1
+        assert response.json[0]["net_total"] == 10.0
+
+        # Delete the expense
+        client.delete(f"{PREFIX}/{expense_id}")
+
+        # Verify settle up amount is updated (should be empty now)
+        response = client.get(f"{PREFIX}/friend/{bob_id}/settleup")
+        assert len(response.json) == 0
+
+    def test_deleting_already_deleted_expense_returns_404(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        expense_id = self._create_expense_and_get_id(client, alice_id, bob_id)
+
+        # Delete the expense first time
+        response = client.delete(f"{PREFIX}/{expense_id}")
+        assert response.status_code == 200
+
+        # Try to delete again
+        response = client.delete(f"{PREFIX}/{expense_id}")
+        assert response.status_code == 404
+
+    def test_delete_one_of_multiple_expenses(self, client):
+        alice_id, bob_id = self._setup_alice_and_bob(client)
+        
+        # Create two expenses
+        create_expense(client, "First expense", "USD", 20.0, [
+            {"user_id": alice_id, "share": 10.0},
+            {"user_id": bob_id, "share": 10.0}
+        ])
+        create_expense(client, "Second expense", "USD", 30.0, [
+            {"user_id": alice_id, "share": 15.0},
+            {"user_id": bob_id, "share": 15.0}
+        ])
+
+        # Get expense IDs from activity (newest first)
+        response = client.get(f"{PREFIX}/activity")
+        expense_ids = [expense["id"] for expense in response.json["activity"]]
+        assert len(expense_ids) == 2
+
+        # Delete the first (newest) expense
+        client.delete(f"{PREFIX}/{expense_ids[0]}")
+
+        # Verify only one expense remains
+        response = client.get(f"{PREFIX}/activity")
+        assert response.json["total"] == 1
+        assert response.json["activity"][0]["description"] == "First expense"

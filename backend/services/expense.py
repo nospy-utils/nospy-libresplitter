@@ -2,7 +2,7 @@ from typing import Any
 
 from daos import ExpenseDAO
 from models import User
-from services.exceptions import NotFriendsException, UserInputValidationException
+from services.exceptions import NotFriendsException, UserInputValidationException, ExpenseNotFoundException
 from services.friend import FriendService
 from services.user import UserService
 from utils.pagination import Page
@@ -68,6 +68,18 @@ class ExpenseService:
             "totals_by_currency": totals_by_currency,
             "totals_by_friend": totals_by_friend,
         }
+
+    def delete_expense(self, user: User, expense_id: int) -> None:
+        """Delete an expense if the user owns it."""
+        expense_owner_id = self.expense_dao.get_expense_owner(expense_id)
+        
+        if expense_owner_id is None:
+            raise ExpenseNotFoundException()
+        
+        if expense_owner_id != user.user_id:
+            raise ExpenseNotFoundException()
+        
+        self.expense_dao.delete_expense(expense_id)
 
     def _group_by_friend(self, flat_by_friend: list) -> list[dict[str, Any]]:
         grouped = {}

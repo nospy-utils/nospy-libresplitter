@@ -99,3 +99,12 @@ def get_activity():
     service = ExpenseService()
     data = service.get_activity(user, pagination)
     return jsonify(data), 200
+
+
+@expenses_bp.delete("/<int:expense_id>")
+@login_required
+def delete_expense(expense_id):
+    user = get_session_user()
+    service = ExpenseService()
+    service.delete_expense(user, expense_id)
+    return jsonify({"message": "Expense deleted successfully."}), 200
