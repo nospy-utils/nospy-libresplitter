@@ -1,8 +1,17 @@
+import time
+
 from base import *
 from database import db as db_module
 
 PREFIX = "/api/friends"
 
+
+def add_friend(from_user_id, to_user_id):
+    with db_module.get_db() as conn:
+        conn.execute(
+            "INSERT INTO friends (friend_1, friend_2) VALUES (?, ?)",
+            (from_user_id, to_user_id),
+        )
 
 def seed_expense(from_user_id, to_user_id, description="lunch", currency="USD", value=10.0):
     with db_module.get_db() as conn:
@@ -107,6 +116,7 @@ class TestGetRecentFriends:
         signin(client, email="bob@example.com")
         bob_id = get_user_id(client, "bob@example.com")
         signin(client, email="alice@example.com")
+        add_friend(alice_id, bob_id)
         seed_expense(alice_id, bob_id)
 
         r = client.get(f"{PREFIX}/recent")
@@ -134,7 +144,10 @@ class TestGetRecentFriends:
         carol_id = get_user_id(client, "carol@example.com")
         signin(client, email="alice@example.com")
 
+        add_friend(alice_id, carol_id)
         seed_expense(alice_id, carol_id, description="older")
+        time.sleep(1)
+        add_friend(alice_id, bob_id)
         seed_expense(alice_id, bob_id, description="newer")
 
         r = client.get(f"{PREFIX}/recent")
@@ -152,7 +165,9 @@ class TestGetRecentFriends:
         signin(client, email="carol@example.com")
         carol_id = get_user_id(client, "carol@example.com")
         signin(client, email="alice@example.com")
+        add_friend(alice_id, bob_id)
         seed_expense(alice_id, bob_id)
+        add_friend(alice_id, carol_id)
         seed_expense(alice_id, carol_id)
 
         r = client.get(f"{PREFIX}/recent?page_size=1")
