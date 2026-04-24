@@ -47,3 +47,22 @@ async function apiGet(url) {
 
     return response;
 }
+
+async function apiDelete(url) {
+    const MAX_RETRIES = 3;
+    let attempt = 0;
+    let response;
+
+    while (attempt < MAX_RETRIES) {
+        response = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+
+        if (response.status !== 503) break;
+        attempt++;
+    }
+
+    return response;
+}
