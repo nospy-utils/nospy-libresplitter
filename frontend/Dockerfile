@@ -12,12 +12,12 @@ RUN npx gulp
 
 FROM alpine:3
 
-RUN apk add --no-cache nginx && \
+RUN apk add --no-cache nginx envsubst certbot certbot-nginx && \
     adduser -D -G nginx appuser
 
 COPY --from=builder /app/output /usr/share/nginx/html
-COPY default.conf /etc/nginx/http.d/default.conf
-
+COPY default.template /etc/nginx/http.d/default.template
+COPY run.sh /app/
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh","/app/run.sh"]
