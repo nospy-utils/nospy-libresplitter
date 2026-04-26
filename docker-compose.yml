@@ -5,6 +5,7 @@ services:
     ports:
       - "8080:80"
     environment:
+      - ENV=production
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
     depends_on:
       - backend

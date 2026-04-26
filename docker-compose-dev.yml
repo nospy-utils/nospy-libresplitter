@@ -1,6 +1,7 @@
 services:
   frontend:
     environment:
+      - ENV=development
       - NGINX_SERVER_NAME=localhost
     volumes:
       - ./frontend/output:/usr/share/nginx/html:z
