@@ -8,4 +8,4 @@ if [[ "$ENV" == "production" ]]; then
     pkill -9 nginx
 fi
 
-nginx -g 'daemon off'
+nginx -g 'daemon off;'
