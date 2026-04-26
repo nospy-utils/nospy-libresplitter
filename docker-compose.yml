@@ -13,6 +13,8 @@ services:
       - backend
     tty: true
     stdin_open: true
+    volumes:
+       - ./frontend/volumes/etc/letsencrypt:/etc/letsencrypt
 
   backend:
     build:
