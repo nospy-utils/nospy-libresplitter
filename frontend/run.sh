@@ -5,7 +5,7 @@ envsubst '${NGINX_SERVER_NAME}' < /etc/nginx/http.d/default.template > /etc/ngin
 
 echo "ENV set to ${ENV}"
 if [[ "$ENV" == "production" ]]; then
-    certbot --nginx --non-interactive --agree-tos --domains "${NGINX_SERVER_NAME}" -v --test-cert
+    certbot --nginx --non-interactive --agree-tos --domains "${NGINX_SERVER_NAME}" -v
     pkill -9 nginx
     echo "0 0,12 * * * root /usr/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && certbot renew -q" >> /etc/crontab
 fi
