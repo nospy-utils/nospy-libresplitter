@@ -1,0 +1,7 @@
+Dockerfile
+volumes
+output
+.idea
+.dockerignore
+node_modules
+README.md
