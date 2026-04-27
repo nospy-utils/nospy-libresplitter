@@ -41,12 +41,12 @@ function buildActivityRow({ from_user_name, is_it_me, description, currency, val
         <div class="col-sm-10 col-lg-11">
             <div class="row">
                 <div class="col">
-                    <strong>${displayName}</strong> added <strong>"${description}"</strong>
+                    <strong>${escapeHtml(displayName)}</strong> added <strong>"${escapeHtml(description)}"</strong>
                 </div>
             </div>
             <div class="row">
                 <div class="col">
-                    <span class="${amountClass}">${amountLabel} ${currency} ${formattedValue}</span>
+                    <span class="${amountClass}">${escapeHtml(amountLabel)} ${escapeHtml(currency)} ${formattedValue}</span>
                 </div>
             </div>
             <div class="row">

@@ -20,7 +20,7 @@ const modalCancelBtn2 = document.getElementById('addexpense-step2-modal-btn-canc
 function buildFriendChip({name}) {
     return `<div class="d-inline-block addexpense-step2-friend-wrapper">
                 <img class="d-inline" src="vendor/img/icons/person.svg" alt="placeholder"/>
-                <h3 class="d-inline">${name}</h3>
+                <h3 class="d-inline">${escapeHtml(name)}</h3>
             </div>`;
 }
 
@@ -32,7 +32,7 @@ function buildExactAmountRow({name}) {
                     </div>
                 </div>
                 <div class="col-4 align-content-center">
-                    <h3 class="text-truncate">${name}</h3>
+                    <h3 class="text-truncate">${escapeHtml(name)}</h3>
                 </div>
                 <div class="col-6 align-content-center">
                     <div class="mb-3 input-group">
@@ -51,7 +51,7 @@ function buildPercentageRow({name}) {
                     </div>
                 </div>
                 <div class="col-6 align-content-center">
-                    <h3 class="text-truncate">${name}</h3>
+                    <h3 class="text-truncate">${escapeHtml(name)}</h3>
                 </div>
                 <div class="col-4 align-content-center">
                     <div class="mb-3 input-group">

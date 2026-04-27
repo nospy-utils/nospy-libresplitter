@@ -13,7 +13,7 @@ function renderOverallSummary(totalsByCurrency) {
     const parts = totalsByCurrency.map(({ currency, my_total }) => {
         const cssClass = my_total >= 0 ? 'positive' : 'negative';
         const label = my_total >= 0 ? 'you are owed' : 'you owe';
-        return `${label} <span class="${cssClass}">${currency} ${formatAmount(my_total)}</span>`;
+        return `${escapeHtml(label)} <span class="${cssClass}">${escapeHtml(currency)} ${formatAmount(my_total)}</span>`;
     });
 
     summary.innerHTML = 'Overall, ' + parts.join(' and ');
@@ -23,7 +23,7 @@ function renderFriendAmounts(currencies) {
     return currencies.map(({ currency, net_total }) => {
         const cssClass = net_total >= 0 ? 'positive' : 'negative';
         const label = net_total >= 0 ? 'owes you' : 'you owe';
-        return `<div>${label} <span class="${cssClass}">${currency} ${formatAmount(net_total)}</span></div>`;
+        return `<div>${escapeHtml(label)} <span class="${cssClass}">${escapeHtml(currency)} ${formatAmount(net_total)}</span></div>`;
     }).join('');
 }
 
@@ -36,14 +36,14 @@ function renderFriendsList(totalsByFriend) {
     }
 
     list.innerHTML = totalsByFriend.map(({ friend_id, friend_name, currencies }) => `
-        <div class="row py-2 friend-row" data-el="${friend_id}">
+        <div class="row py-2 friend-row" data-el="${escapeHtml(String(friend_id))}">
             <div class="col-2 align-content-center">
                 <div class="friend-thumbnail">
                     <img src="vendor/img/icons/person.svg" alt=""/>
                 </div>
             </div>
             <div class="col-6 align-content-center">
-                <h3 class="text-truncate">${friend_name}</h3>
+                <h3 class="text-truncate">${escapeHtml(friend_name)}</h3>
             </div>
             <div class="col-4 align-content-center text-end">
                 ${renderFriendAmounts(currencies)}

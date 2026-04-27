@@ -19,7 +19,7 @@ function hideSpinner() {
 
 function buildFriendRow({id, name}) {
     return `
-    <div class="row py-2" data-friend-id="${id}">
+    <div class="row py-2" data-friend-id="${escapeHtml(String(id))}">
         <div class="col-sm-2 col-lg-1 d-none d-sm-block">
             <div class="addexpense-step1-friend-thumbnail">
                 <img src="vendor/img/icons/person.svg" alt="placeholder"/>
@@ -27,10 +27,10 @@ function buildFriendRow({id, name}) {
         </div>
         <div class="col-sm-10 col-lg-11 align-content-center">
             <div class="addexpense-step1-list-name">
-                <h3>${name}</h3>
+                <h3>${escapeHtml(name)}</h3>
             </div>
             <div class="addexpense-step1-list-input">
-                <input class="form-check-input addexpense-radio-input friend-checkbox" type="checkbox" data-friend-id="${id}">
+                <input class="form-check-input addexpense-radio-input friend-checkbox" type="checkbox" data-friend-id="${escapeHtml(String(id))}">
             </div>
         </div>
     </div>`;
