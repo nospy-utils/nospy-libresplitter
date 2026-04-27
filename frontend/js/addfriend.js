@@ -1,3 +1,5 @@
+document.getElementById('cancel-btn').addEventListener('click', () => history.back());
+
 document.querySelector('#addfriend-form').addEventListener('submit', async function (e) {
     e.preventDefault();
     const email = document.getElementById('email').value;

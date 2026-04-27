@@ -72,6 +72,8 @@ async function loadNextPage() {
     }
 }
 
+document.getElementById('cancel-btn').addEventListener('click', () => history.back());
+
 document.getElementById('save-btn').addEventListener('click', () => {
     const checked = document.querySelectorAll('.friend-checkbox:checked');
     const params = new URLSearchParams();

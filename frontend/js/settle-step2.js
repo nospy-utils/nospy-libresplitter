@@ -3,6 +3,8 @@ function formatAmount(value) {
 }
 
 
+document.getElementById('cancel-btn').addEventListener('click', () => history.back());
+
 (async () => {
     const params = new URLSearchParams(window.location.search);
 

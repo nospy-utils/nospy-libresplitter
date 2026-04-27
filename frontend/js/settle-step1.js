@@ -54,6 +54,8 @@ function renderRows(data) {
     });
 }
 
+document.getElementById('cancel-btn').addEventListener('click', () => history.back());
+
 (async () => {
     const params = new URLSearchParams(window.location.search);
     const userId = params.get('user_id');

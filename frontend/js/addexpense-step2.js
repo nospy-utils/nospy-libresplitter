@@ -9,11 +9,13 @@ const exactList = document.getElementById('addexpense-step2-modal-list-exact-amo
 const pctList = document.getElementById('addexpense-step2-modal-list-percentage-list');
 const expenseForm = document.getElementById('addexpense-step2-expense-form');
 const saveForm = document.getElementById('addexpense-step2-save-form');
+const cancelButton = document.getElementById('cancel-btn');
 const descriptionInput = document.getElementById('addexpense-step2-description');
 const currencySelect = document.getElementById('addexpense-step2-currency');
 const paymentOptionsBtn = document.getElementById('paymentOptions');
 const modalCancelBtn1 = document.getElementById('addexpense-step2-modal-btn-cancel-1');
 const modalCancelBtn2 = document.getElementById('addexpense-step2-modal-btn-cancel-2');
+
 
 function buildFriendChip({name}) {
     return `<div class="d-inline-block addexpense-step2-friend-wrapper">
@@ -155,6 +157,8 @@ async function saveExpense() {
 }
 
 async function addEventListenerForUI() {
+    cancelButton.addEventListener('click', () => history.back());
+
     saveForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         await saveExpense();
