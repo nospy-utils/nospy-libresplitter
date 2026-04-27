@@ -31,7 +31,6 @@ function formatAmount(value) {
 
         const value = parseFloat(document.getElementById('settle-step2-fg-value').value);
         const errorEl = document.getElementById('settle-step2-error');
-        errorEl.style.display = 'none';
 
         const response = await apiPost(
             `${API_EXPENSES_FRIEND}/${friendId}/settleup`,
@@ -45,6 +44,6 @@ function formatAmount(value) {
 
         const data = await response.json();
         errorEl.textContent = data.description || 'Something went wrong.';
-        errorEl.style.display = 'block';
+        errorEl.classList.toggle('invisible');
     });
 })();

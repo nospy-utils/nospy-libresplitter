@@ -12,5 +12,5 @@ document.querySelector('#addfriend-form').addEventListener('submit', async funct
     const data = await response.json();
     const errorEl = document.getElementById('addfriend-error');
     errorEl.textContent = `${data.name} - ${data.description}`;
-    errorEl.style.display = 'block';
+    errorEl.classList.toggle('invisible');
 });

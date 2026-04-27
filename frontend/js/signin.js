@@ -1,11 +1,11 @@
 const params = new URLSearchParams(window.location.search);
 
 if (params.get('createdUser') === 'true') {
-    document.getElementById('created-user-banner').style.display = 'block';
+    document.getElementById('created-user-banner').classList.toggle('invisible');
 }
 
 if (params.get('unauthenticatedUser') === 'true') {
-    document.getElementById('unauthenticated-user-banner').style.display = 'block';
+    document.getElementById('unauthenticated-user-banner').classList.toggle('invisible');
 }
 
 document.querySelector('form').addEventListener('submit', async function (e) {
@@ -26,5 +26,5 @@ document.querySelector('form').addEventListener('submit', async function (e) {
 
     const errorEl = document.getElementById('signin-error');
     errorEl.textContent = errorMessage;
-    errorEl.style.display = 'block';
+    errorEl.classList.toggle('invisible');
 });

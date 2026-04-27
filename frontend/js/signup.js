@@ -17,5 +17,5 @@ document.querySelector('form').addEventListener('submit', async function (e) {
 
     const errorEl = document.getElementById('signup-error');
     errorEl.textContent = errorMessage;
-    errorEl.style.display = 'block';
+    errorEl.classList.toggle('invisible');
 });
