@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 
 from services import FriendService, UserService, login_required, get_session_user
 from utils.pagination import validate_pagination_request_params
+from utils.strings import sanitise
 
 friends_bp = Blueprint("friends", __name__, url_prefix="/api/friends")
 
@@ -33,7 +34,7 @@ def get_friend(user_id: int):
 @login_required
 def add_friend():
     data = request.get_json(silent=True) or {}
-    friend_email = data.get("email") or ""
+    friend_email = sanitise(data.get("email"))
 
     user = get_session_user()
     service = FriendService()

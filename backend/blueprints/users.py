@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, session
 
 from services import UserService, login_required
+from utils.strings import sanitise
 
 users_bp = Blueprint("users", __name__, url_prefix="/api/users")
 
@@ -8,8 +9,8 @@ users_bp = Blueprint("users", __name__, url_prefix="/api/users")
 def signup():
     data = request.get_json(silent=True) or {}
 
-    name = data.get("name") or ""
-    email = (data.get("email") or "").strip().lower()
+    name = sanitise(data.get("name"))
+    email = sanitise(data.get("email")).strip().lower()
     password = data.get("password") or ""
 
     service = UserService()
@@ -21,7 +22,7 @@ def signup():
 @users_bp.post("/signin")
 def signin():
     data = request.get_json(silent=True) or {}
-    email = (data.get("email") or "").strip().lower()
+    email = sanitise(data.get("email")).strip().lower()
     password = data.get("password") or ""
 
     service = UserService()

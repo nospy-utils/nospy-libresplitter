@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 from services import ExpenseService, login_required, get_session_user
 from services.exceptions import UserInputValidationException
 from utils.pagination import validate_pagination_request_params
+from utils.strings import sanitise
 
 expenses_bp = Blueprint("expenses", __name__, url_prefix="/api/expenses")
 
@@ -39,7 +40,7 @@ def get_settle_up_amount(user_id):
 @login_required
 def settle_up(user_id):
     data = request.get_json(silent=True) or {}
-    currency = data.get("currency") or ""
+    currency = sanitise(data.get("currency"))
     value = data.get("value")
     reverse = data.get("reverse")
 
@@ -63,8 +64,8 @@ def settle_up(user_id):
 @login_required
 def create_expense():
     data = request.get_json(silent=True) or {}
-    description = data.get("description")
-    currency = data.get("currency")
+    description = sanitise(data.get("description"))
+    currency = sanitise(data.get("currency"))
     value = data.get("value")
     participants = data.get("participants")
 
