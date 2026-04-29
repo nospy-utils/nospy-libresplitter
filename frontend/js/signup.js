@@ -18,4 +18,7 @@ document.querySelector('form').addEventListener('submit', async function (e) {
     const errorEl = document.getElementById('signup-error');
     errorEl.textContent = errorMessage;
     errorEl.classList.toggle('invisible');
+    errorEl.classList.toggle('d-none');
 });
+
+document.getElementById('signup-button-signin').addEventListener('click', () => window.location.href='signin.html');

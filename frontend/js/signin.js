@@ -1,11 +1,15 @@
 const params = new URLSearchParams(window.location.search);
 
 if (params.get('createdUser') === 'true') {
-    document.getElementById('created-user-banner').classList.toggle('invisible');
+    const cubEl = document.getElementById('created-user-banner');
+    cubEl.classList.toggle('invisible');
+    cubEl.classList.toggle('d-none');
 }
 
 if (params.get('unauthenticatedUser') === 'true') {
-    document.getElementById('unauthenticated-user-banner').classList.toggle('invisible');
+    const uub = document.getElementById('unauthenticated-user-banner');
+    uub.classList.toggle('invisible');
+    uub.classList.toggle('d-none');
 }
 
 document.querySelector('form').addEventListener('submit', async function (e) {
@@ -27,4 +31,8 @@ document.querySelector('form').addEventListener('submit', async function (e) {
     const errorEl = document.getElementById('signin-error');
     errorEl.textContent = errorMessage;
     errorEl.classList.toggle('invisible');
+    errorEl.classList.toggle('d-none');
 });
+
+
+document.getElementById('signin-button-signup').addEventListener('click', ()=> window.location.href='/signup.html');
