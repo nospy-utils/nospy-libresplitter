@@ -1,4 +1,5 @@
 from typing import Any
+from decimal import Decimal, ROUND_HALF_UP
 
 from daos import ExpenseDAO
 from models import User
@@ -18,7 +19,9 @@ class ExpenseService:
         if user.user_id not in participant_ids:
             raise UserInputValidationException("The logged-in user must be one of the participants.")
 
-        if sum(p["share"] for p in participants) != float(value):
+        # damn you IEEE 754
+        tmp_sum = Decimal(sum(p["share"] for p in participants)).quantize(Decimal("0.00"), rounding=ROUND_HALF_UP)
+        if float(tmp_sum) != float(value):
             raise UserInputValidationException("Sum of participant shares must equal the expense value.")
 
         friend_service = FriendService()
