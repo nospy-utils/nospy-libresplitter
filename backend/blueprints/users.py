@@ -2,8 +2,12 @@ from flask import Blueprint, request, jsonify, session
 
 from services import UserService, login_required
 from utils.strings import sanitise
+from ratelimiter import limiter, init_limiter
+from flask import current_app
 
 users_bp = Blueprint("users", __name__, url_prefix="/api/users")
+
+ratelimiter = init_limiter(current_app)
 
 @users_bp.post("/signup")
 def signup():
@@ -38,6 +42,7 @@ def signin():
 
 @users_bp.post("/signout")
 @login_required
+@ratelimiter.exempt
 def signout():
     session.clear()
     return jsonify({"message": "Signed out successfully."}), 200
@@ -45,5 +50,6 @@ def signout():
 
 @users_bp.get("/me")
 @login_required
+@ratelimiter.exempt
 def me():
     return jsonify({"user_id": session["user_id"], "email": session["email"]}), 200
