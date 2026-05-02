@@ -37,38 +37,39 @@ class FriendDAO(object):
                 total = conn.execute(
                     """
                     SELECT COUNT(*) AS cnt
-                    FROM friends f LEFT JOIN (
-                        SELECT CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END AS friend_id
-                        FROM expense_user eu
-                        INNER JOIN expenses ex ON eu.expense_id = ex.id
-                        WHERE eu.from_user_id = ? OR eu.to_user_id = ?
-                        GROUP BY friend_id
-                    ) as t ON (t.friend_id = f.friend_1 OR t.friend_id = f.friend_2)
+                    FROM friends f
+                    WHERE f.friend_1 = ? OR f.friend_2 = ?
                     """,
-                    (user.user_id, user.user_id, user.user_id),
+                    (user.user_id, user.user_id),
                 ).fetchone()["cnt"]
 
                 rows = conn.execute(
                     """
                     SELECT u.id, u.name
                     FROM
-                        friends f LEFT JOIN
                         (
-                            SELECT CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END AS friend_id,
-                                     MAX(ex.created_at)                                                        AS last_interaction
-                              FROM expense_user eu
-                                       INNER JOIN expenses ex ON eu.expense_id = ex.id
+                            SELECT
+                                CASE WHEN f.friend_1 = ? THEN f.friend_2 ELSE f.friend_1 END AS friend_id
+                            FROM
+                                friends f
+                            WHERE
+                                f.friend_1 = ? OR f.friend_2 = ?
+                        ) AS f LEFT JOIN
+                        (
+                            SELECT 
+                                CASE WHEN eu.from_user_id = ? THEN eu.to_user_id ELSE eu.from_user_id END AS friend_id,
+                                MAX(ex.created_at) AS last_interaction
+                              FROM expense_user eu INNER JOIN expenses ex 
+                                  ON eu.expense_id = ex.id
                               WHERE eu.from_user_id = ?
                                  OR eu.to_user_id = ?
                               GROUP BY friend_id
-                        ) AS t ON (t.friend_id = f.friend_1 OR t.friend_id = f.friend_2)
-                        INNER JOIN users u on (u.id = f.friend_1 = u.id OR f.friend_2 = u.id)
-                    WHERE
-                        u.id != ?
+                        ) AS t ON t.friend_id = f.friend_id
+                        INNER JOIN users u on (u.id = f.friend_id)
                     ORDER BY t.last_interaction DESC
                     LIMIT ? OFFSET ?
                     """,
-                    (user.user_id, user.user_id, user.user_id, user.user_id, page.page_size, offset),
+                    (user.user_id, user.user_id, user.user_id, user.user_id, user.user_id, user.user_id, page.page_size, offset),
                 ).fetchall()
 
                 return {
