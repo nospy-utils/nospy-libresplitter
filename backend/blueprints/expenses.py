@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-
 from services import ExpenseService, login_required, get_session_user
 from services.exceptions import UserInputValidationException
 from utils.pagination import validate_pagination_request_params
@@ -71,7 +70,7 @@ def create_expense():
 
     if not description or not isinstance(description, str):
         raise UserInputValidationException("description is required.")
-    if not currency or not isinstance(currency, str):
+    if len(currency) == 0:
         raise UserInputValidationException("currency is required.")
     if value is None:
         raise UserInputValidationException("value is required.")

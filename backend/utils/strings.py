@@ -2,4 +2,4 @@ import re
 
 
 def sanitise(content: str) -> str:
-    return re.sub('<[^<]+?>', '', content) if content is not None else ''
+    return re.sub('<[^<]+?>', '', str(content)) if content is not None else ''
