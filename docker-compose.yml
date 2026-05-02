@@ -23,5 +23,13 @@ services:
       - "8081:5000"
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - APP_RL_STORAGE_URI=memcached://memcached:11211
     volumes:
       - ./backend/volumes/database:/app/volumes/database:z
+
+  memcached:
+    image: memcached:1-alpine
+    command:
+      - --memory-limit=64
+    ports:
+      - "11211:11211"
