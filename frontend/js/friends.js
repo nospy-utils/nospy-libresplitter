@@ -1,6 +1,6 @@
 function showError(message) {
     document.getElementById('error-message').textContent = message;
-    document.getElementById('error-banner').classList.add('visible');
+    document.getElementById('error-banner').classList.toggle('invisible');
 }
 
 function formatAmount(amount) {
