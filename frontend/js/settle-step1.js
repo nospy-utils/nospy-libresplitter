@@ -63,8 +63,8 @@ document.getElementById('cancel-btn').addEventListener('click', () => history.ba
 
     const response = await apiGet(`${API_EXPENSES_FRIEND}/${userId}/settleup`);
     if (!response.ok) {
-        const { description } = await response.json();
-        document.getElementById('error-message').textContent = description;
+        const { name, description } = await response.json();
+        document.getElementById('error-message').textContent = `${name} - ${description}`;
         document.getElementById('error-banner').classList.add('visible');
         return;
     }

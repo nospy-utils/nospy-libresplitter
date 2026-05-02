@@ -55,8 +55,9 @@ async function loadNextPage() {
 
     if (!response.ok) {
         hideSpinner();
-        const {description} = await response.json();
-        showError(description);
+        const { name, description } = await response.json();
+        const errorMessage = `${name} - ${description}`;
+        showError(errorMessage);
         return;
     }
 
@@ -85,8 +86,9 @@ document.getElementById('save-btn').addEventListener('click', () => {
     const response = await apiGet(`${API_FRIENDS_RECENT}?page=1&page_size=${PAGE_SIZE}`);
 
     if (!response.ok) {
-        const {description} = await response.json();
-        showError(description);
+        const { name, description } = await response.json();
+        const errorMessage = `${name} - ${description}`;
+        showError(errorMessage);
         return;
     }
 

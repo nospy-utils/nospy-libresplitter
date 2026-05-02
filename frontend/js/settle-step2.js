@@ -45,7 +45,7 @@ document.getElementById('cancel-btn').addEventListener('click', () => history.ba
         }
 
         const data = await response.json();
-        errorEl.textContent = data.description || 'Something went wrong.';
+        errorEl.textContent = `${data.name} - ${data.description}` || 'Something went wrong.';
         errorEl.classList.toggle('invisible');
     });
 })();

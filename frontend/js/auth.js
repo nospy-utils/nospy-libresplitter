@@ -1,7 +1,5 @@
 (async () => {
-    const response = await fetch(API_USERS_ME, {
-        credentials: 'include',
-    });
+    const response = await apiGet(API_USERS_ME);
 
     if(window.location.pathname === '/' ||
             window.location.pathname.startsWith('/signin.html') ||

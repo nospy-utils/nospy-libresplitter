@@ -1,3 +1,8 @@
+function showError(message) {
+    document.getElementById('error-message').textContent = message;
+    document.getElementById('error-banner').classList.add('visible');
+}
+
 function formatAmount(amount) {
     return Math.abs(amount).toFixed(2);
 }
@@ -63,7 +68,12 @@ function renderFriendsList(totalsByFriend) {
 
 (async () => {
     const response = await fetch(API_EXPENSES_ME, { credentials: 'include' });
-    if (!response.ok) return;
+    if (!response.ok) {
+        const { name, description } = await response.json();
+        const errorMessage = `${name} - ${description}`;
+        showError(errorMessage);
+        return;
+    }
 
     const { totals_by_currency, totals_by_friend } = await response.json();
     renderOverallSummary(totals_by_currency);

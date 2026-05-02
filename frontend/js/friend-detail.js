@@ -133,8 +133,9 @@ function attachDeleteHandlers() {
             const response = await apiDelete(`${API_EXPENSES}/${expenseId}`);
 
             if (!response.ok) {
-                const { description } = await response.json();
-                showError(description);
+                const { name, description } = await response.json();
+                const errorMessage = `${name} - ${description}`;
+                showError(errorMessage);
                 return;
             }
 
@@ -154,8 +155,9 @@ async function loadNextPage() {
 
     if (!response.ok) {
         hideSpinner();
-        const {description} = await response.json();
-        showError(description);
+        const { name, description } = await response.json();
+        const errorMessage = `${name} - ${description}`;
+        showError(errorMessage);
         return;
     }
 
@@ -195,8 +197,9 @@ async function updateAddExpenseForm() {
     const expensesResp = await apiGet(`${API_EXPENSES_FRIEND}/${userId}?page=1&page_size=${PAGE_SIZE}`);
 
     if (!expensesResp.ok) {
-        const {description} = await expensesResp.json();
-        showError(description);
+        const { name, description } = await expensesResp.json();
+        const errorMessage = `${name} - ${description}`;
+        showError(errorMessage);
         return;
     }
 
