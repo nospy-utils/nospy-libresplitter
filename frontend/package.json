@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "http-serve -p 8080 -c-1 ./output/",
+    "build": "gulp",
     "watch": "gulp watch"
   },
   "author": "",
