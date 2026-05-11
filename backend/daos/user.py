@@ -28,7 +28,8 @@ class UserDAO(object):
         try:
             with get_db() as conn:
                 return conn.execute(
-                    "SELECT id, name, email, password FROM users WHERE email = ?", (email,)
+                    "SELECT id, name, email, password FROM users WHERE email = ?",
+                    (email,),
                 ).fetchone()
         except sqlite3.OperationalError as e:
             logger.exception(e)
@@ -37,7 +38,7 @@ class UserDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error looking up user")
 
-    def save_user(self, user:User) -> None:
+    def save_user(self, user: User) -> None:
         try:
             pass_hash = user.generate_password_hash()
             with get_db() as conn:

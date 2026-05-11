@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 
 class ExpenseDAO(object):
 
-    def create_expense(self, user: User, description: str, currency: str, value: float, participants: list) -> None:
+    def create_expense(
+        self,
+        user: User,
+        description: str,
+        currency: str,
+        value: float,
+        participants: list,
+    ) -> None:
         try:
             with get_db() as conn:
                 cursor = conn.execute(
@@ -75,7 +82,13 @@ class ExpenseDAO(object):
                     GROUP BY friend_id, e.currency
                     HAVING net_total != 0;
                     """,
-                    (user.user_id, user.user_id, user.user_id, user.user_id, user.user_id),
+                    (
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                    ),
                 ).fetchall()
                 return [dict(r) for r in rows]
         except sqlite3.OperationalError as e:
@@ -103,7 +116,14 @@ class ExpenseDAO(object):
                     GROUP BY friend_id, e.currency
                     HAVING net_total != 0 and friend_id = ?;
                     """,
-                    (user.user_id, user.user_id, user.user_id, user.user_id, user.user_id, friend.user_id),
+                    (
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        friend.user_id,
+                    ),
                 ).fetchall()
                 return [dict(r) for r in rows]
         except sqlite3.OperationalError as e:
@@ -197,7 +217,9 @@ class ExpenseDAO(object):
             logger.exception(e)
             raise ServiceInternalException("Error fetching settle up amount")
 
-    def create_settle_up(self, user: User, friend: User, currency: str, value: float, reverse: bool) -> None:
+    def create_settle_up(
+        self, user: User, friend: User, currency: str, value: float, reverse: bool
+    ) -> None:
         """Insert an expense + expense_user row representing a settle-up payment.
 
         reverse=False → current user paid the friend  (from_user_id=user, to_user_id=friend)
@@ -291,7 +313,7 @@ class ExpenseDAO(object):
                     "DELETE FROM expense_user WHERE expense_id = ?",
                     (expense_id,),
                 )
-                
+
                 # Delete the expense record
                 conn.execute(
                     "DELETE FROM expenses WHERE id = ?",
@@ -306,7 +328,7 @@ class ExpenseDAO(object):
 
     def get_expense_owner(self, expense_id: int) -> int:
         """Get the user ID of who created the expense.
-        
+
         Returns the user_created ID, or None if expense doesn't exist.
         """
         try:
@@ -315,7 +337,7 @@ class ExpenseDAO(object):
                     "SELECT user_created FROM expenses WHERE id = ?",
                     (expense_id,),
                 ).fetchone()
-                
+
                 return result["user_created"] if result else None
         except sqlite3.OperationalError as e:
             logger.exception(e)

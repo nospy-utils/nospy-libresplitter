@@ -16,6 +16,7 @@ class InvalidCredentialsException(HTTPException):
     def __init__(self, description: str = "Invalid email or password."):
         super().__init__(description)
 
+
 class UserNotAuthenticatedException(HTTPException):
 
     code = 401
@@ -46,6 +47,7 @@ class NotFriendsException(HTTPException):
 
     def __init__(self, description: str = "You are not friends with this user."):
         super().__init__(description)
+
 
 # TODO Maybe I don't want to be as explicit about this one
 class ExpenseNotFoundException(HTTPException):

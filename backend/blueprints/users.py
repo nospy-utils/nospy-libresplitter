@@ -9,6 +9,7 @@ users_bp = Blueprint("users", __name__, url_prefix="/api/users")
 
 ratelimiter = init_limiter(current_app)
 
+
 @users_bp.post("/signup")
 def signup():
     data = request.get_json(silent=True) or {}

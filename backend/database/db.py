@@ -13,5 +13,5 @@ def get_db() -> sqlite3.Connection:
 
 def init_db():
     with get_db() as conn:
-        with open(SCHEMA_PATH, 'r') as f:
-            conn.executescript(''.join(f.readlines()))
+        with open(SCHEMA_PATH, "r") as f:
+            conn.executescript("".join(f.readlines()))

@@ -14,7 +14,11 @@ class FriendDAO(object):
 
     def add_friend(self, user: User, friend: User) -> None:
         # Normalize ordering so (a,b) and (b,a) map to the same row.
-        a, b = (user.user_id, friend.user_id) if user.user_id < friend.user_id else (friend.user_id, user.user_id)
+        a, b = (
+            (user.user_id, friend.user_id)
+            if user.user_id < friend.user_id
+            else (friend.user_id, user.user_id)
+        )
         try:
             with get_db() as conn:
                 conn.execute(
@@ -22,6 +26,7 @@ class FriendDAO(object):
                 )
         except sqlite3.IntegrityError:
             from services.exceptions import FriendAlreadyExistsException
+
             raise FriendAlreadyExistsException()
         except sqlite3.OperationalError as e:
             logger.exception(e)
@@ -69,7 +74,16 @@ class FriendDAO(object):
                     ORDER BY t.last_interaction DESC
                     LIMIT ? OFFSET ?
                     """,
-                    (user.user_id, user.user_id, user.user_id, user.user_id, user.user_id, user.user_id, page.page_size, offset),
+                    (
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        user.user_id,
+                        page.page_size,
+                        offset,
+                    ),
                 ).fetchall()
 
                 return {
@@ -100,7 +114,13 @@ class FriendDAO(object):
                         u.id != ?
                     ORDER BY u.name
                     """,
-                    (user.user_id, other_user.user_id, other_user.user_id, user.user_id, other_user.user_id),
+                    (
+                        user.user_id,
+                        other_user.user_id,
+                        other_user.user_id,
+                        user.user_id,
+                        other_user.user_id,
+                    ),
                 ).fetchone()
                 return row is not None
         except sqlite3.OperationalError as e:
@@ -109,4 +129,3 @@ class FriendDAO(object):
         except sqlite3.DatabaseError as e:
             logger.exception(e)
             raise ServiceInternalException("Error checking friend relationship")
-

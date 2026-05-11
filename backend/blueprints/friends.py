@@ -41,5 +41,3 @@ def add_friend():
     service.add_friend(user, friend_email)
 
     return jsonify({"message": "Friend added successfully."}), 201
-
-

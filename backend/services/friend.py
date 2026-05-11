@@ -33,4 +33,3 @@ class FriendService:
 
     def are_friends(self, user: User, other_user: User) -> bool:
         return self.friend_dao.are_friends(user, other_user)
-
