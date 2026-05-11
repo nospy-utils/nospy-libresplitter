@@ -1,3 +1,13 @@
+const loadingContainer = document.getElementById('friend-loadingpage-container');
+const contentContainer = document.getElementById('friend-content-container');
+
+function hideLoadingContainer(){
+    loadingContainer.classList.add('invisible');
+    loadingContainer.classList.add('d-none');
+    contentContainer.classList.remove('invisible');
+    contentContainer.classList.remove('d-none');
+}
+
 function showError(message) {
     document.getElementById('error-message').textContent = message;
     document.getElementById('error-banner').classList.toggle('invisible');
@@ -69,6 +79,7 @@ function renderFriendsList(totalsByFriend) {
 
 (async () => {
     const response = await fetch(API_EXPENSES_ME, { credentials: 'include' });
+    hideLoadingContainer();
     if (!response.ok) {
         const { name, description } = await response.json();
         const errorMessage = `${name} - ${description}`;

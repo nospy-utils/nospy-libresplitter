@@ -4,6 +4,16 @@ let hasNext = true;
 let isLoading = false;
 let scrollObserver;
 
+const loadingContainer = document.getElementById('activity-loadingpage-container');
+const contentContainer = document.getElementById('activity-content-container');
+
+function hideLoadingContainer(){
+    loadingContainer.classList.add('invisible');
+    loadingContainer.classList.add('d-none');
+    contentContainer.classList.remove('invisible');
+    contentContainer.classList.remove('d-none');
+}
+
 function formatDate(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -40,7 +50,7 @@ function buildActivityRow({ from_user_name, is_it_me, description, currency, val
         </div>
         <div class="col-sm-10 col-lg-11">
             <div class="row">
-                <div class="col">
+                <div class="col text-truncate">
                     <strong>${escapeHtml(displayName)}</strong> added <strong>"${escapeHtml(description)}"</strong>
                 </div>
             </div>
@@ -98,6 +108,7 @@ async function loadNextPage() {
 (async () => {
     const response = await apiGet(`${API_EXPENSES_ACTIVITY}?page=1&page_size=${PAGE_SIZE}`);
 
+    hideLoadingContainer();
     if (!response.ok) {
         const { name, description } = await response.json();
         const errorMessage = `${name} - ${description}`;

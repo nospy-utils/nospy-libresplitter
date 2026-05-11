@@ -4,6 +4,16 @@ let hasNext = true;
 let isLoading = false;
 let scrollObserver;
 
+const loadingContainer = document.getElementById('addexpensestep1-loadingpage-container');
+const contentContainer = document.getElementById('addexpensestep1-content-container');
+
+function hideLoadingContainer(){
+    loadingContainer.classList.add('invisible');
+    loadingContainer.classList.add('d-none');
+    contentContainer.classList.remove('invisible');
+    contentContainer.classList.remove('d-none');
+}
+
 function showError(message) {
     document.getElementById('error-message').textContent = message;
     document.getElementById('error-banner').classList.add('visible');
@@ -85,6 +95,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
 (async () => {
     const response = await apiGet(`${API_FRIENDS_RECENT}?page=1&page_size=${PAGE_SIZE}`);
 
+    hideLoadingContainer();
     if (!response.ok) {
         const { name, description } = await response.json();
         const errorMessage = `${name} - ${description}`;

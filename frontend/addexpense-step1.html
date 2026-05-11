@@ -24,10 +24,16 @@
         </div>
     </nav>
 
-    <div class="container addexpense-step1-content">
+    <div id="addexpensestep1-loadingpage-container" class="content-with-tabbar d-flex justify-content-center align-items-center ">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <div id="addexpensestep1-content-container" class="container addexpense-step1-content invisible d-none">
         <div class="row py-2">
             <div class="col">
-                <small>Recent</small>
+                <h3>Recent</h3>
             </div>
         </div>
 

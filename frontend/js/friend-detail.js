@@ -6,6 +6,9 @@ let friendName = '';
 let userId;
 let scrollObserver;
 
+const loadingContainer = document.getElementById('friend-details-loadingpage-container');
+const contentContainer = document.getElementById('friend-details-content-container');
+
 function formatAmount(value) {
     return Number(value).toFixed(2);
 }
@@ -28,6 +31,19 @@ function showSpinner() {
 
 function hideSpinner() {
     document.getElementById('loading-spinner').classList.remove('visible');
+}
+
+function showSettleUp() {
+    const row = document.getElementById('friend-details-settle-row');
+    row.classList.toggle('invisible');
+    row.classList.toggle('d-none');
+}
+
+function hideLoadingContainer(){
+    loadingContainer.classList.add('invisible');
+    loadingContainer.classList.add('d-none');
+    contentContainer.classList.remove('invisible');
+    contentContainer.classList.remove('d-none');
 }
 
 function renderSummary(data) {
@@ -72,9 +88,9 @@ function buildExpenseRow({id, from_user_name, description, currency, expense_tot
                 </div>
             </div>
         </div>
-        <div class="col">
+        <div class="col text-truncate">
             <div class="row">
-                <div class="col title">
+                <div class="col title text-truncate">
                     ${escapeHtml(description)}
                 </div>
             </div>
@@ -196,6 +212,7 @@ async function updateAddExpenseForm() {
 
     const expensesResp = await apiGet(`${API_EXPENSES_FRIEND}/${userId}?page=1&page_size=${PAGE_SIZE}`);
 
+    hideLoadingContainer();
     if (!expensesResp.ok) {
         const { name, description } = await expensesResp.json();
         const errorMessage = `${name} - ${description}`;
@@ -214,6 +231,7 @@ async function updateAddExpenseForm() {
         document.getElementById('expenses-list').innerHTML =
             '<div class="row py-2"><div class="col text-muted">No expenses yet.</div></div>';
     } else {
+        showSettleUp();
         appendExpenses(data.expenses);
     }
 
