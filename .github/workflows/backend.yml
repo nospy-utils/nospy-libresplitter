@@ -27,6 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        mkdir -p volumes/database
     - name: Test with pytest
       run: |
         pytest
