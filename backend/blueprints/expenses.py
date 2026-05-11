@@ -81,7 +81,7 @@ def create_expense():
     for p in participants:
         if not isinstance(p, dict) or "user_id" not in p or "share" not in p:
             raise UserInputValidationException("Each participant must have user_id and share.")
-        if not isinstance(p["share"], (int, float)) or p["share"] <= 0:
+        if not isinstance(p["share"], (int, float)) or p["share"] < 0:
             raise UserInputValidationException("Each participant share must be a positive number.")
 
     user = get_session_user()

@@ -1175,7 +1175,6 @@ class TestCreateExpense:
 
     def test_participant_missing_user_id_returns_400(self, client):
         signup_and_signin(client)
-        alice_id = get_user_id(client, "alice@example.com")
         r = create_expense(client, participants=[{"share": 10.0}])
         assert r.status_code == 400
 
@@ -1188,8 +1187,17 @@ class TestCreateExpense:
     def test_participant_non_positive_share_returns_400(self, client):
         signup_and_signin(client)
         alice_id = get_user_id(client, "alice@example.com")
-        r = create_expense(client, participants=[{"user_id": alice_id, "share": 0}])
+        r = create_expense(client, participants=[{"user_id": alice_id, "share": -1.0}])
         assert r.status_code == 400
+
+    def test_participant_pay_zero_returns_200(self, client):
+        signup_and_signin(client)
+        bob_id = get_user_id(client, "bob@example.com")
+        #  in this case, bob is supposed to pay for the whole expense
+        r = create_expense(client, participants=[
+            {"user_id": bob_id, "share": 10.0},
+        ])
+        assert r.status_code == 201
 
     # --- business rule validation (service) ---
 
