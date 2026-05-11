@@ -1,3 +1,6 @@
+body
+    overflow-x: hidden
+
 .app-header
     display: flex
     align-items: center
@@ -20,6 +23,7 @@
 
 .content-with-tabbar
     overflow-y: auto
+    overflow-x: hidden
     // 84px (bottom bar) + 64 (tab bar button) = 148px
     height: calc(100vh - 148px)
     > div.row:last-child
