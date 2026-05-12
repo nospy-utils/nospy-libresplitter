@@ -24,6 +24,7 @@ services:
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - APP_RL_STORAGE_URI=memcached://memcached:11211
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./backend/volumes/database:/app/volumes/database:z
 
