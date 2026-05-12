@@ -29,11 +29,12 @@ init_db()
 init_limiter(app)
 
 # load blueprints
-from blueprints import users_bp, friends_bp, expenses_bp  # noqa: E402
+from blueprints import users_bp, friends_bp, expenses_bp, scheduled_bp  # noqa: E402
 
 app.register_blueprint(users_bp)
 app.register_blueprint(friends_bp)
 app.register_blueprint(expenses_bp)
+app.register_blueprint(scheduled_bp)
 
 
 @app.errorhandler(HTTPException)
