@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from werkzeug.exceptions import HTTPException
@@ -6,8 +7,10 @@ from flask import Flask
 from flask_cors import CORS
 from database.db import init_db
 from ratelimiter import init_limiter
+from scheduler import init_scheduler
 
 app = Flask(__name__)
+app.logger.setLevel(logging.INFO)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 
 cors = CORS(
@@ -27,6 +30,8 @@ init_db()
 
 # rate limiter
 init_limiter(app)
+# background scheduler
+init_scheduler(app)
 
 # load blueprints
 from blueprints import users_bp, friends_bp, expenses_bp, scheduled_bp  # noqa: E402

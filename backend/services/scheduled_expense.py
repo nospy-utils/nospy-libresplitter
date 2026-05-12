@@ -59,3 +59,6 @@ class ScheduledExpenseService:
             int(sched_day),
             sched_end,
         )
+
+    def retrieve_scheduled_expenses(self) -> list:
+        return self.scheduled_expense_dao.get_due_scheduled_expenses()

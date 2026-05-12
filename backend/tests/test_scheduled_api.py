@@ -570,3 +570,243 @@ class TestCreateScheduledExpense:
         with db_module.get_db() as conn:
             count = conn.execute("SELECT COUNT(*) as c FROM expenses").fetchone()["c"]
         assert count == 0
+
+
+# ---------------------------------------------------------------------------
+# ScheduledExpenseService.retrieve_scheduled_expenses
+# ---------------------------------------------------------------------------
+
+
+class TestRetrieveScheduledExpenses:
+    """Unit tests for ScheduledExpenseService.retrieve_scheduled_expenses.
+
+    These tests bypass the HTTP layer and exercise the service directly,
+    after seeding rows into the SQLite database used by the test client
+    fixture.
+    """
+
+    @staticmethod
+    def _today_day():
+        return date.today().day
+
+    @staticmethod
+    def _other_day():
+        # Pick any day-of-month that is guaranteed not to be "today" and is
+        # always a valid day-of-month (1..28).
+        today = date.today().day
+        return 1 if today != 1 else 2
+
+    @staticmethod
+    def _insert_scheduled(
+        user_created,
+        value,
+        sched_day,
+        sched_end=None,
+        currency="NZD",
+        description="Rent",
+    ):
+        with db_module.get_db() as conn:
+            cursor = conn.execute(
+                "INSERT INTO scheduled_expenses "
+                "(user_created, currency, value, description, sched_day, sched_end) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (user_created, currency, value, description, sched_day, sched_end),
+            )
+            return cursor.lastrowid
+
+    @staticmethod
+    def _insert_scheduled_user(sched_id, from_user_id, to_user_id, value):
+        with db_module.get_db() as conn:
+            conn.execute(
+                "INSERT INTO scheduled_expense_user "
+                "(sched_expense_id, from_user_id, to_user_id, value) "
+                "VALUES (?, ?, ?, ?)",
+                (sched_id, from_user_id, to_user_id, value),
+            )
+
+    def _service(self):
+        # Imported lazily so the test-client fixture has had a chance to
+        # rebind the DB path before the service touches the database.
+        from services.scheduled_expense import ScheduledExpenseService
+
+        return ScheduledExpenseService()
+
+    # --- empty / no-match cases ---
+
+    def test_returns_empty_list_when_no_scheduled_expenses(self, client):
+        assert self._service().retrieve_scheduled_expenses() == []
+
+    def test_excludes_scheduled_expenses_not_due_today(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        sched_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._other_day()
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 5.0)
+
+        assert self._service().retrieve_scheduled_expenses() == []
+
+    def test_excludes_scheduled_expenses_past_sched_end(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        past = (date.today() - timedelta(days=1)).isoformat()
+        sched_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day(), sched_end=past
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 5.0)
+
+        assert self._service().retrieve_scheduled_expenses() == []
+
+    # --- positive cases ---
+
+    def test_includes_scheduled_expense_due_today_with_null_sched_end(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        sched_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day(), sched_end=None
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 5.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 1
+        assert result[0]["id"] == sched_id
+
+    def test_includes_scheduled_expense_due_today_with_future_sched_end(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        future = (date.today() + timedelta(days=30)).isoformat()
+        sched_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day(), sched_end=future
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 5.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 1
+        assert result[0]["id"] == sched_id
+
+    def test_includes_scheduled_expense_with_sched_end_equal_to_today(self, client):
+        """sched_end IS today should still be considered active (<= comparison)."""
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        today = date.today().isoformat()
+        sched_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day(), sched_end=today
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 5.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 1
+        assert result[0]["id"] == sched_id
+
+    # --- shape / participants format ---
+
+    def test_returned_fields_include_scheduled_expense_columns(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        sched_id = self._insert_scheduled(
+            alice_id,
+            value=20.0,
+            sched_day=self._today_day(),
+            currency="USD",
+            description="Internet",
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 10.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 1
+        row = result[0]
+        assert row["id"] == sched_id
+        assert row["user_created"] == alice_id
+        assert row["currency"] == "USD"
+        assert row["value"] == 20.0
+        assert row["description"] == "Internet"
+        assert row["sched_day"] == self._today_day()
+        assert row["sched_end"] is None
+        assert "participants" in row
+
+    def test_participants_format_matches_create_expense(self, client):
+        """The participants list must use the {"user_id", "share"} shape that
+        ExpenseService.create_expense expects, with the creator included so
+        the validation `sum(shares) == value` passes."""
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        sched_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day()
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 4.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        participants = result[0]["participants"]
+
+        # Every participant entry has exactly the expected keys.
+        for p in participants:
+            assert set(p.keys()) == {"user_id", "share"}
+
+        user_ids = sorted(p["user_id"] for p in participants)
+        assert user_ids == sorted([alice_id, bob_id])
+
+        # The shares must sum to the scheduled-expense value.
+        total_share = sum(float(p["share"]) for p in participants)
+        assert total_share == 10.0
+
+        # The creator must be one of the participants.
+        assert any(p["user_id"] == alice_id for p in participants)
+
+        # Bob's share matches what was inserted into scheduled_expense_user.
+        bob_entry = next(p for p in participants if p["user_id"] == bob_id)
+        assert float(bob_entry["share"]) == 4.0
+
+    def test_participants_for_three_user_scheduled_expense(self, client):
+        alice_id, bob_id, carol_id = _setup_alice_bob_carol(client)
+        sched_id = self._insert_scheduled(
+            alice_id, value=30.0, sched_day=self._today_day()
+        )
+        self._insert_scheduled_user(sched_id, alice_id, bob_id, 10.0)
+        self._insert_scheduled_user(sched_id, alice_id, carol_id, 10.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 1
+        participants = result[0]["participants"]
+
+        user_ids = sorted(p["user_id"] for p in participants)
+        assert user_ids == sorted([alice_id, bob_id, carol_id])
+
+        total_share = sum(float(p["share"]) for p in participants)
+        assert total_share == 30.0
+
+    # --- multiple rows ---
+
+    def test_returns_multiple_due_scheduled_expenses(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+        sched_id_1 = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day(), description="Rent"
+        )
+        self._insert_scheduled_user(sched_id_1, alice_id, bob_id, 5.0)
+
+        sched_id_2 = self._insert_scheduled(
+            alice_id, value=20.0, sched_day=self._today_day(), description="Internet"
+        )
+        self._insert_scheduled_user(sched_id_2, alice_id, bob_id, 8.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 2
+        ids = sorted(r["id"] for r in result)
+        assert ids == sorted([sched_id_1, sched_id_2])
+
+    def test_only_returns_due_expenses_when_mixed_with_non_due(self, client):
+        alice_id, bob_id = _setup_alice_and_bob(client)
+
+        due_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day()
+        )
+        self._insert_scheduled_user(due_id, alice_id, bob_id, 5.0)
+
+        # Not due today (different day-of-month).
+        not_due_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._other_day()
+        )
+        self._insert_scheduled_user(not_due_id, alice_id, bob_id, 5.0)
+
+        # Due day matches but past sched_end.
+        past = (date.today() - timedelta(days=1)).isoformat()
+        expired_id = self._insert_scheduled(
+            alice_id, value=10.0, sched_day=self._today_day(), sched_end=past
+        )
+        self._insert_scheduled_user(expired_id, alice_id, bob_id, 5.0)
+
+        result = self._service().retrieve_scheduled_expenses()
+        assert len(result) == 1
+        assert result[0]["id"] == due_id

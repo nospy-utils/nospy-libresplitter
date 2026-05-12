@@ -52,3 +52,60 @@ class ScheduledExpenseDAO(object):
         except sqlite3.DatabaseError as e:
             logger.exception(e)
             raise ServiceInternalException("Error creating scheduled expense")
+
+    def get_due_scheduled_expenses(self) -> list:
+        try:
+            with get_db() as conn:
+                sched_rows = conn.execute("""
+                    SELECT
+                        id,
+                        user_created,
+                        currency,
+                        value,
+                        description,
+                        created_at,
+                        sched_day,
+                        sched_end
+                    FROM scheduled_expenses
+                    WHERE (sched_end IS NULL OR date('now') <= sched_end)
+                      AND sched_day = CAST(strftime('%d', 'now') AS INTEGER)
+                    """).fetchall()
+
+                results = []
+                for row in sched_rows:
+                    sched = dict(row)
+                    participant_rows = conn.execute(
+                        """
+                        SELECT from_user_id, to_user_id, value
+                        FROM scheduled_expense_user
+                        WHERE sched_expense_id = ?
+                        """,
+                        (sched["id"],),
+                    ).fetchall()
+
+                    participants = []
+                    creator_id = sched["user_created"]
+                    creator_share = 0.0
+                    for p in participant_rows:
+                        participants.append(
+                            {"user_id": p["to_user_id"], "share": p["value"]}
+                        )
+                        creator_share += float(p["value"])
+
+                    # The creator is always one of the participants in the
+                    # shape that ExpenseService.create_expense expects.
+                    creator_remaining = float(sched["value"]) - creator_share
+                    participants.append(
+                        {"user_id": creator_id, "share": creator_remaining}
+                    )
+
+                    sched["participants"] = participants
+                    results.append(sched)
+
+                return results
+        except sqlite3.OperationalError as e:
+            logger.exception(e)
+            raise ServiceUnavailableException("Service Unavailable")
+        except sqlite3.DatabaseError as e:
+            logger.exception(e)
+            raise ServiceInternalException("Error fetching due scheduled expenses")
