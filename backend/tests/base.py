@@ -4,6 +4,7 @@ USERS_PREFIX = "/api/users"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def signup(client, name="alice", email="alice@example.com", password="password123"):
     return client.post(
         f"{USERS_PREFIX}/signup",
@@ -17,7 +18,10 @@ def signin(client, email="alice@example.com", password="password123"):
         json={"email": email, "password": password},
     )
 
-def signup_and_signin(client, name="alice", email="alice@example.com", password="password123"):
+
+def signup_and_signin(
+    client, name="alice", email="alice@example.com", password="password123"
+):
     signup(client, name=name, email=email, password=password)
     signin(client, email=email, password=password)
 

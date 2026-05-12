@@ -1,15 +1,22 @@
 import pytest
 import flask_limiter
 
+
 # Replace Limiter with a no-op before app.py is imported so no storage
 # backend (e.g. memcached) is ever initialised during tests.
 class _NoOpLimiter:
-    def __init__(self, *args, **kwargs): pass
-    def __getattr__(self, name): return lambda *a, **kw: None
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, name):
+        return lambda *a, **kw: None
+
     def limit(self, *args, **kwargs):
         return lambda f: f
+
     def exempt(self, f):
         return f
+
 
 flask_limiter.Limiter = _NoOpLimiter
 

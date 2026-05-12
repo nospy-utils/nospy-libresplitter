@@ -2,6 +2,7 @@ from base import *
 
 PREFIX = "/api/users"
 
+
 class TestSignup:
     def test_success_returns_201(self, client):
         r = signup(client)

@@ -13,7 +13,10 @@ def add_friend(from_user_id, to_user_id):
             (from_user_id, to_user_id),
         )
 
-def seed_expense(from_user_id, to_user_id, description="lunch", currency="USD", value=10.0):
+
+def seed_expense(
+    from_user_id, to_user_id, description="lunch", currency="USD", value=10.0
+):
     with db_module.get_db() as conn:
         cur = conn.execute(
             "INSERT INTO expenses (user_created, currency, value, description) VALUES (?, ?, ?, ?)",
@@ -26,9 +29,11 @@ def seed_expense(from_user_id, to_user_id, description="lunch", currency="USD", 
         )
         return expense_id
 
+
 # ---------------------------------------------------------------------------
 # POST /api/friends
 # ---------------------------------------------------------------------------
+
 
 class TestAddFriend:
     def test_unauthenticated_returns_401(self, client):
@@ -95,6 +100,7 @@ class TestAddFriend:
 # ---------------------------------------------------------------------------
 # GET /api/friends/recent
 # ---------------------------------------------------------------------------
+
 
 class TestGetRecentFriends:
     def test_unauthenticated_returns_401(self, client):
@@ -184,6 +190,7 @@ class TestGetRecentFriends:
 # ---------------------------------------------------------------------------
 # GET /api/friends/<user_id>
 # ---------------------------------------------------------------------------
+
 
 class TestGetFriend:
     def test_unauthenticated_returns_401(self, client):
