@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     value           DOUBLE      NOT NULL,
     description     TEXT        NOT NULL,
     created_at      DATETIME    DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_created)  REFERENCES users(user_created)
+    FOREIGN KEY (user_created)  REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS expense_user (
@@ -31,6 +31,6 @@ CREATE TABLE IF NOT EXISTS expense_user (
     to_user_id      INTEGER NOT NULL,
     value           DOUBLE NOT NULL,
     FOREIGN KEY (expense_id)    REFERENCES expenses(id),
-    FOREIGN KEY (from_user_id)  REFERENCES users(id)
+    FOREIGN KEY (from_user_id)  REFERENCES users(id),
     FOREIGN KEY (to_user_id)    REFERENCES users(id)
 );
