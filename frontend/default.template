@@ -1,9 +1,16 @@
 # Docker embedded dns server
 resolver 127.0.0.11 valid=30s;
 
+log_format custom '$remote_addr - $remote_user [$time_local] '
+                           '"$request" $status $body_bytes_sent '
+                           '"$http_referer" "$http_user_agent"';
+
 server {
     listen 80 default_server;
     server_name ${NGINX_SERVER_NAME};
+
+    access_log /dev/stdout;
+    error_log /dev/stderr;
 
     root /usr/share/nginx/html;
     index index.html signin.html;
