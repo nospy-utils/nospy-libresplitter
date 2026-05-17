@@ -15,6 +15,16 @@ server {
     root /usr/share/nginx/html;
     index index.html signin.html;
 
+    server_tokens off;
+
+    if ($request_method !~ ^(GET|POST|OPTIONS)$) {
+      return 405;
+    }
+
+    location ~ /(\\.ht|\\.git|\\.svn) {
+      deny all;
+    }
+
     location /api/ {
         set $backend backend;
         proxy_pass http://$backend:5000;
