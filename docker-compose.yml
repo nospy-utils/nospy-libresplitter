@@ -11,8 +11,7 @@ services:
       - NGINX_SERVER_NAME=${NGINX_SERVER_NAME}
     depends_on:
       - backend
-    tty: true
-    stdin_open: true
+    restart: unless-stopped
     volumes:
        - ./frontend/volumes/etc/letsencrypt:/etc/letsencrypt
 
@@ -27,9 +26,11 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./backend/volumes/database:/app/volumes/database:z
+    restart: unless-stopped
 
   memcached:
     image: memcached:1-alpine
+    restart: unless-stopped
     command:
       - --memory-limit=64
     ports:

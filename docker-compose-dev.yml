@@ -8,6 +8,8 @@ services:
       - NGINX_SERVER_NAME=localhost
     volumes:
       - ./frontend/output:/usr/share/nginx/html:z
+    restart: no
   backend:
     environment:
       - SECRET_KEY=dev-secret-change-in-production
+    restart: no
