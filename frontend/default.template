@@ -17,7 +17,7 @@ server {
 
     server_tokens off;
 
-    if ($request_method !~ ^(GET|POST|OPTIONS)$) {
+    if ($request_method !~ ^(GET|POST|OPTIONS|DELETE)$) {
       return 405;
     }
 
