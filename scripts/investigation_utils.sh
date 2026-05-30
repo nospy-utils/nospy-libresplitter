@@ -7,7 +7,7 @@
 #   1) Not paying any licenses in this project - mostly out of fun really
 #   2) setting up loki + grafana would require more resources than the machine I'm using has :)
 function display_attempts_dotenv(){
-  docker logs nospy-splitwise-frontend-1  \
+  docker-compose -f docker-compose.yml logs frontend  \
     | jq -Rr 'fromjson? | select(.request_uri | test(".*\\.env$"; "i"))' \
     | jq -sr 'group_by(.remote_addr, .status)
              | map({ remote_addr: .[0].remote_addr, status: .[0].status, count: length })
