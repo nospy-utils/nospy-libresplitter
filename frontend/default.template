@@ -1,15 +1,24 @@
 # Docker embedded dns server
 resolver 127.0.0.11 valid=30s;
 
-log_format custom '$remote_addr - $remote_user [$time_local] '
-                           '"$request" $status $body_bytes_sent '
-                           '"$http_referer" "$http_user_agent"';
+log_format json_fmt escape=json '{'
+        '"time_local":"$time_local",'
+        '"remote_addr":"$remote_addr",'
+        '"request_method":"$request_method",'
+        '"request_uri":"$request_uri",'
+        '"status":"$status",'
+        '"body_bytes_sent":"$body_bytes_sent",'
+        '"request_time":"$request_time",'
+        '"http_referrer":"$http_referer",'
+        '"http_user_agent":"$http_user_agent",'
+        '"upstream_response_time":"$upstream_response_time"'
+    '}';
 
 server {
     listen 80 default_server;
     server_name ${NGINX_SERVER_NAME};
 
-    access_log /dev/stdout;
+    access_log /dev/stdout json_fmt;
     error_log /dev/stderr;
 
     root /usr/share/nginx/html;
