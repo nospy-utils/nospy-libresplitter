@@ -13,6 +13,6 @@ ordered-set==4.1.0
 packaging==26.2
 pymemcache==4.0.0
 typing_extensions==4.15.0
-Werkzeug==3.1.8
+Werkzeug==3.1.9
 wrapt==2.1.2
 APScheduler==3.11.2
